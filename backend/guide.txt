@@ -1,3 +1,0 @@
-This folder should contain:
-Server-side logic
-Hugging-Face API calls (still server-side logic)
