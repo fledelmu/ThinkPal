@@ -1,3 +1,5 @@
+import quiz_img from '../assets/quiz_img.png';
+
 const SearchNotes = () => {
     return(
         <>  
@@ -21,13 +23,13 @@ const SearchContainer = () => {
 }
 
 const QuizList = () => {
-    const items = Array(50).fill("");
+    const items = Array(10).fill("");
     return(
         <div className='bg-rule-60 grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
             <button className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white'>+ quiz</button>
             {items.map((_, index) => (
                 <button key={index} className='bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white'>
-                    Quiz {index + 1}
+                    <img src={quiz_img} alt='notebook image' className='w-full h-full rounded-xl'/>
                 </button>
             ))}
             
