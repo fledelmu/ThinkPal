@@ -1,5 +1,6 @@
-import quiz_img from '../assets/quiz_img.png';
-
+import quiz_img from '../assets/images/quiz_img.png';
+import { useState } from 'react'
+;
 const SearchNotes = () => {
     return(
         <>  
