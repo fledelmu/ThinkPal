@@ -1,5 +1,6 @@
-import notebook_image from '../assets/notebook_img.png';
-import React, { useState } from 'react';
+import notebook_image from '../assets/images/notebook_img.png';
+import add_icon from '../assets/icons/add_icon.png';
+import { useState } from 'react';
 
 const SearchNotes = () => {
     return(
@@ -9,7 +10,6 @@ const SearchNotes = () => {
                 placeholder='Search Notes...' 
                 className='bg-rule-30 h-[50px] w-full rounded-xl p-4 text-white'/>
             </div>
-            
         </>
     )
 }
@@ -23,15 +23,17 @@ const SearchContainer = () => {
     )
 }
 
-const AddNoteModal = ({ onExit }) => {
+const AddNoteOptions = ({ onExit, onAddNote }) => {
     return(
         <>
             <div className='fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50'>
-                <div className='bg-rule-60 w-[50%] h-[50%] rounded-xl flex flex-col items-center'>
-                    <div className=''></div>
-                    <div className='flex flex-row bottom-0 items-center justify-center w-full h-full gap-4'>
-                        <button onClick={onExit} className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl'>Cancel</button>
-                        <button className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl'>Confirm</button>
+                <div className='bg-rule-30 w-[50%] h-[60%] rounded-xl flex flex-col items-center'>
+                    <div className='bg-rule-60 w-full h-[100%] flex flex-row items-center justify-center gap-5'>
+                        <button onClick={onAddNote} className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note</button>
+                        <button className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note via PDF</button>
+                    </div>
+                    <div className='flex flex-row items-center justify-end w-full h-[20%] bg-rule-30'>
+                        <button onClick={onExit} className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl mr-10 flex items-center'>Cancel</button>
                     </div>
                     
                 </div>
@@ -40,14 +42,29 @@ const AddNoteModal = ({ onExit }) => {
     )
 }
 
+const AddNote = ({ onExit }) => {
+    return(
+        <>
+            <div className='fixed bg-rule-60 flex items-center rounded-xl w-[80vw] h-[95vh]'>
+                <button onClick={onExit} className='bg-rule-30 h-[50px] w-[50px] m-8 rounded-xl text-white flex items-center justify-center '>
+                    Exit
+                </button>
+            </div>
+        </>
+    )
+}
+
 const NotesList = () => {
     const items = Array(10).fill("");
     const [modal, popUp] = useState(false);
+    const [addNote, showAddNote] = useState(false);
 
     return(
         <>
             <div className='bg-rule-60 grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
-                <button onClick={() => popUp(true)} className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white'>+ notes</button>
+                <button onClick={() => popUp(true)} className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white flex items-center justify-center '>
+                    <img src={add_icon} alt='add icon' className='w-[20%] h-[20%] rounded-xl'/>
+                </button>   
                 {items.map((_, idx) => (
                     <button key={idx} className='bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white'>
                         <img src={notebook_image} alt='notebook image' className='w-full h-full rounded-xl'/>
@@ -56,11 +73,23 @@ const NotesList = () => {
                 
             </div>
 
-            {modal && (<AddNoteModal onExit={() => popUp(false)}/>)}
+            {modal && (
+                <AddNoteOptions onExit={() => popUp(false)}
+                onAddNote={() => {
+                    showAddNote(true);
+                    popUp(false);
+                }}
+                />
+            )}
+
+            {addNote && (
+                <AddNote onExit={() => showAddNote(false)}/>
+            )}
         </>
         
     )
 }
+
 const Notes = () => {
     return(
         <>
