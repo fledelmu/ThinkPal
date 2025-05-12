@@ -1,7 +1,10 @@
 import notebook_image from '../assets/images/notebook_img.png';
 import add_icon from '../assets/icons/add_icon.png';
 import { useState } from 'react';
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'; 
 
+// Start of search components
 const SearchNotes = () => {
     return(
         <>  
@@ -22,12 +25,14 @@ const SearchContainer = () => {
         </div>
     )
 }
+// End of search components
 
+// Start of notes components
 const AddNoteOptions = ({ onExit, onAddNote }) => {
     return(
         <>
             <div className='fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50'>
-                <div className='bg-rule-30 w-[50%] h-[60%] rounded-xl flex flex-col items-center'>
+                <div className='bg-rule-30 w-[50%] h-[60%] flex flex-col items-center'>
                     <div className='bg-rule-60 w-full h-[100%] flex flex-row items-center justify-center gap-5'>
                         <button onClick={onAddNote} className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note</button>
                         <button className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note via PDF</button>
@@ -43,18 +48,41 @@ const AddNoteOptions = ({ onExit, onAddNote }) => {
 }
 
 const AddNote = ({ onExit }) => {
-    return(
-        <>
-            <div className='fixed bg-rule-60 flex items-center rounded-xl w-[80vw] h-[95vh]'>
-                <button onClick={onExit} className='bg-rule-30 h-[50px] w-[50px] m-8 rounded-xl text-white flex items-center justify-center '>
-                    Exit
-                </button>
+    const [value, setValue] = useState('');
+    const modules = {
+        toolbar: [
+            [{ header: [1, 2, false] }],
+            ['bold', 'italic', 'underline'],
+            ['blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean']
+        ],
+    };
+    return (
+        <div className='fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center bg-black bg-opacity-20 z-50'>
+            <div className='bg-rule-60 w-[80vw] h-[95vh] rounded-xl flex flex-col'>
+                <div className="bg-rule-30 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl w-full">
+                    <button onClick={onExit} className='bg-rule-10 h-[30px] w-[50px] m-8 text-black flex items-center justify-center'>
+                        Exit
+                    </button>
+                </div>
+                
             </div>
-        </>
-    )
-}
+            <div>
+                <ReactQuill
+                theme="snow"
+                value={value}
+                onChange={setValue}
+                modules={modules}
+                placeholder="Start writing here..."
+                />
+            </div>
+        </div>
+    );
+};
 
-const NotesList = () => {
+const NotesList = () => {   
     const items = Array(10).fill("");
     const [modal, popUp] = useState(false);
     const [addNote, showAddNote] = useState(false);
@@ -89,6 +117,7 @@ const NotesList = () => {
         
     )
 }
+// End of notes components
 
 const Notes = () => {
     return(
