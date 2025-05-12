@@ -1,3 +1,6 @@
+import notebook_image from '../assets/notebook_img.png';
+import React, { useState } from 'react';
+
 const SearchNotes = () => {
     return(
         <>  
@@ -20,19 +23,42 @@ const SearchContainer = () => {
     )
 }
 
+const AddNoteModal = ({ onExit }) => {
+    return(
+        <>
+            <div className='fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50'>
+                <div className='bg-rule-60 w-[50%] h-[50%] rounded-xl flex flex-col items-center'>
+                    <div className=''></div>
+                    <div className='flex flex-row bottom-0 items-center justify-center w-full h-full gap-4'>
+                        <button onClick={onExit} className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl'>Cancel</button>
+                        <button className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl'>Confirm</button>
+                    </div>
+                    
+                </div>
+            </div>
+        </>
+    )
+}
 
 const NotesList = () => {
-    const items = Array(50).fill("");
+    const items = Array(10).fill("");
+    const [modal, popUp] = useState(false);
+
     return(
-        <div className='bg-rule-60 grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
-            <button className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white'>+ notes</button>
-            {items.map((_, idx) => (
-                <button key={idx} className='bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white'>
-                    note {idx + 1}
-                </button>
-            ))}
-            
-        </div>
+        <>
+            <div className='bg-rule-60 grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
+                <button onClick={() => popUp(true)} className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white'>+ notes</button>
+                {items.map((_, idx) => (
+                    <button key={idx} className='bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white'>
+                        <img src={notebook_image} alt='notebook image' className='w-full h-full rounded-xl'/>
+                    </button>
+                ))}
+                
+            </div>
+
+            {modal && (<AddNoteModal onExit={() => popUp(false)}/>)}
+        </>
+        
     )
 }
 const Notes = () => {
