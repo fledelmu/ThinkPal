@@ -1,8 +1,8 @@
 import notebook_image from '../assets/images/notebook_img.png';
 import add_icon from '../assets/icons/add_icon.png';
 import { useState } from 'react';
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'; 
+import ReactQuill, { Quill } from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 // Start of search components
 const SearchNotes = () => {
@@ -49,35 +49,45 @@ const AddNoteOptions = ({ onExit, onAddNote }) => {
 
 const AddNote = ({ onExit }) => {
     const [value, setValue] = useState('');
+    const Size = Quill.import('formats/size');
+    Size.whitelist = ['8px', '10px', '12px', '14px', '18px', '24px', '36px', '48px', '64px', '96px', '128px'];
+    Quill.register(Size, true);
     const modules = {
         toolbar: [
-            [{ header: [1, 2, false] }],
-            ['bold', 'italic', 'underline'],
-            ['blockquote', 'code-block'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link'],
+            [{ 'font': [] }],
+            [{ 'size': Size.whitelist }],
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'align': [] }],
+            ['link', 'image', 'video'],
             ['clean']
-        ],
+        ]
     };
     return (
-        <div className='fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center bg-black bg-opacity-20 z-50'>
-            <div className='bg-rule-60 w-[80vw] h-[95vh] rounded-xl flex flex-col'>
+        <div className='fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center  z-50'>
+            <div className='bg-rule-60 w-[85vw] h-[95vh] rounded-xl flex flex-col'>
                 <div className="bg-rule-30 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl w-full">
                     <button onClick={onExit} className='bg-rule-10 h-[30px] w-[50px] m-8 text-black flex items-center justify-center'>
                         Exit
                     </button>
                 </div>
-                
+                <div className='h-[92%] overflow-y-hidden'>
+                    <ReactQuill
+                    style={{ height: "100%" }}
+                    theme="snow"
+                    value={value}
+                    onChange={setValue}
+                    modules={modules}
+                    placeholder="Start writing here..."
+                    />
             </div>
-            <div>
-                <ReactQuill
-                theme="snow"
-                value={value}
-                onChange={setValue}
-                modules={modules}
-                placeholder="Start writing here..."
-                />
             </div>
+            
         </div>
     );
 };
