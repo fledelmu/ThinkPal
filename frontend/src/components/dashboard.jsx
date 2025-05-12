@@ -1,8 +1,11 @@
 // Dashboard Component and related code
 const Accomplished = () => {
     return(
-        <div className='bg-rule-60 h-full w-full rounded-xl flex items-center justify-center'>
-            <h1>Deadlines</h1>
+        <div className='bg-rule-60 h-full w-full rounded-xl flex flex-row items-center justify-start overflow-hidden'>
+            <div className='bg-rule-30 w-[10%] h-[70%] m-10'></div>
+            <div className='bg-rule-30 w-[10%] h-[70%] m-10'></div>
+            <div className='bg-rule-30 w-[10%] h-[70%] m-10'></div>
+            
         </div>
     )
 }
@@ -20,7 +23,7 @@ const Summary = () => {
     return(
         <div className='grid grid-cols-1 gap-4 h-full w-full'>
             <div className='h-full flex flex-col justify-start text-left'>
-                <h1 className='text-3xl font-bold m-4 text-rule-30'>Deadlines</h1>
+                <h1 className='text-3xl font-bold m-4 text-rule-30'>Notes</h1>
                 <Accomplished />
             </div>
         </div>
@@ -30,7 +33,7 @@ const Summary = () => {
 const Stats = () => {
     return(
         <div className='h-full w-full flex flex-col text-left'>
-                <h1 className='text-3xl font-bold m-4 text-rule-30'>Statistics</h1>
+                <h1 className='text-3xl font-bold m-4 text-rule-30'>Quizes</h1>
                 <div className='bg-rule-60 h-full w-full rounded-xl flex items-center justify-center'>
                     Test
                 </div>
