@@ -1,20 +1,18 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import language_tool_python
+
 import torch
 
 app = Flask(__name__)
 CORS(app)
 
-# Question Generation Model (E2E)
 tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
 model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
 
 # Question Answering Model
 tokenizer_qa = AutoTokenizer.from_pretrained("bert-large-uncased-whole-word-masking-finetuned-squad")
 model_qa = AutoModelForQuestionAnswering.from_pretrained("bert-large-uncased-whole-word-masking-finetuned-squad")
-
 
 
 """
@@ -29,7 +27,7 @@ def process_text():
 
     return jsonify(qa_pairs)
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     print("Starting Flask server...")
     app.run(debug=True, host='0.0.0.0', port=5000)
 
@@ -37,7 +35,7 @@ if __name__ == '__main__':
 
 
 input_text = "Paris, the capital city of France, is known for its rich history, stunning architecture, and vibrant culture. The Eiffel Tower, one of the most famous landmarks in the world, is located in Paris and attracts millions of tourists each year. Paris is also renowned for its art galleries, including the Louvre, which houses the iconic painting, the Mona Lisa. The city is a hub for fashion, with its high-end boutiques and annual Fashion Week showcasing the latest trends. Paris has been a symbol of romance, elegance, and intellectual thought for centuries, making it a unique destination for travelers worldwide."
-gmr = language_tool_python.LanguageTool('en-US')
+
 # Generate Questions (E2E style)
 prompt = "e2e question generation: " + input_text
 inputs_qg = tokenizer_qg.encode(prompt, return_tensors="pt")
