@@ -3,3 +3,24 @@
   max-height: 100vh;
   text-align: center;
 }
+
+
+.ql-snow .ql-picker.ql-size .ql-picker-label::before {
+  display: none;
+}
+
+
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value]::after {
+  content: attr(data-value);
+  text-transform: none;
+}
+
+
+.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  display: none;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value]::after {
+  content: attr(data-value);
+  text-transform: none;
+}
