@@ -3,6 +3,7 @@ import add_icon from '../assets/icons/add_icon.png';
 import { useState } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { useDropzone } from 'react-dropzone';
 
 // Start of search components
 const SearchNotes = () => {
@@ -28,25 +29,99 @@ const SearchContainer = () => {
 // End of search components
 
 // Start of notes components
-const AddNoteOptions = ({ onExit, onAddNote }) => {
+const AddNoteOptions = ({ onExit, onAddNote}) => {
+    const [addPDFNote, showAddPDFNote] = useState(false);
+
     return(
         <>
             <div className='fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50'>
                 <div className='bg-rule-30 w-[50%] h-[60%] flex flex-col items-center'>
-                    <div className='bg-rule-60 w-full h-[100%] flex flex-row items-center justify-center gap-5'>
-                        <button onClick={onAddNote} className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note</button>
-                        <button className='bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white'>Add Note via PDF</button>
-                    </div>
+                    {!addPDFNote ? (
+                        <div className="bg-rule-60 w-full h-full flex flex-row items-center justify-center gap-5">
+                            <button
+                                onClick={onAddNote}
+                                className="bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white"
+                            >
+                                Add Note
+                            </button>
+                            <button
+                                onClick={() => showAddPDFNote(true)}
+                                className="bg-rule-30 w-[25%] h-[60%] rounded-xl m-3 text-white"
+                            >
+                                Add Note via PDF
+                            </button>
+                        </div>
+                    ) : (
+                        <AddPDFNote onExit={() => showAddPDFNote(false)} />
+                    )}
                     <div className='flex flex-row items-center justify-end w-full h-[20%] bg-rule-30'>
                         <button onClick={onExit} className='bg-rule-10 w-[100px] h-1 p-6 rounded-xl mr-10 flex items-center'>Cancel</button>
                     </div>
-                    
+
                 </div>
             </div>
         </>
     )
 }
 
+
+const AddPDFNote = ({ onExit, onAddNote }) => {
+    const [pdfText, setPdfText] = useState("");
+
+    const onDrop = async (acceptedFiles) => {
+        const file = acceptedFiles[0];
+        if (file && file.type === 'application/pdf') {
+            const text = await extractTextFromPDF(file);
+            setPdfText(text); // Set the PDF content to be used in the Quill editor
+            onAddNote(text); // Pass this text to the AddNote component (Quill editor)
+        } else {
+            alert("Please drop a valid PDF file.");
+        }
+    };
+
+    const extractTextFromPDF = async (file) => {
+        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+        let text = '';
+        const numPages = pdf.numPages;
+        
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+            const pageText = content.items.map(item => item.str).join(' ');
+            text += pageText + "\n"; // Collect the text from each page
+        }
+        return text;
+    };
+
+    // Setup the dropzone for the drag-and-drop area
+    const { getRootProps, getInputProps } = useDropzone({
+        onDrop,
+        accept: '.pdf',
+        multiple: false,
+    });
+
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-rule-60">
+            {!pdfText ? (
+                <div 
+                    {...getRootProps()} 
+                    className="p-8 border-dashed border-2 border-gray-500 w-3/4 h-3/4 flex items-center justify-center cursor-pointer rounded-lg"
+                >
+                    <input {...getInputProps()} />
+                    <p className="text-center">Drag and drop your PDF file here</p>
+                </div>
+            ) : (
+                <div className="w-4/5 h-4/5 overflow-auto p-4 border border-gray-300 rounded-lg">
+                    <p className="font-bold mb-2">Extracted Text:</p>
+                    <pre className="whitespace-pre-wrap">{pdfText}</pre>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// Add Note Option #1
 const AddNote = ({ onExit }) => {
     const [value, setValue] = useState('');
 
@@ -103,26 +178,13 @@ const AddNote = ({ onExit }) => {
 };
 
 
+
+
 const NotesList = () => {   
     const items = Array(10).fill("");
     const [modal, popUp] = useState(false);
     const [addNote, showAddNote] = useState(false);
 
-    const handleSave = async () => {
-    const htmlContent = value;  
-    const title = yourTitleStateHere;
-
-    await fetch('/your/api/endpoint', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            note_title: title,
-            note_content: htmlContent  
-        })
-    });
-};
 
     return(
         <>
@@ -150,6 +212,8 @@ const NotesList = () => {
             {addNote && (
                 <AddNote onExit={() => showAddNote(false)}/>
             )}
+
+
         </>
         
     )
