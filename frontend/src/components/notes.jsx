@@ -49,6 +49,8 @@ const AddNoteOptions = ({ onExit, onAddNote }) => {
 
 const AddNote = ({ onExit }) => {
     const [value, setValue] = useState('');
+
+
     const Size = Quill.import('formats/size');
     Size.whitelist = ['8px', '10px', '12px', '14px', '18px', '24px', '36px', '48px', '64px', '96px', '128px'];
     Quill.register(Size, true);
@@ -75,7 +77,14 @@ const AddNote = ({ onExit }) => {
                     <button onClick={onExit} className='bg-rule-10 h-[30px] w-[50px] m-8 text-black flex items-center justify-center'>
                         Exit
                     </button>
+                    <button className='bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center'>
+                        Save
+                    </button>
                 </div>
+                <div className='bg-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5 '>
+                        <h2 className='text-2xl m-5 font-bold text-rule-30'>Title:</h2>
+                        <input className='border-2 w-[20%]' type='text' placeholder='Enter Title'></input>
+                    </div>
                 <div className='h-[92%] overflow-y-hidden'>
                     <ReactQuill
                     style={{ height: "100%" }}
@@ -85,17 +94,35 @@ const AddNote = ({ onExit }) => {
                     modules={modules}
                     placeholder="Start writing here..."
                     />
-            </div>
+                </div>
             </div>
             
+        
         </div>
     );
 };
+
 
 const NotesList = () => {   
     const items = Array(10).fill("");
     const [modal, popUp] = useState(false);
     const [addNote, showAddNote] = useState(false);
+
+    const handleSave = async () => {
+    const htmlContent = value;  
+    const title = yourTitleStateHere;
+
+    await fetch('/your/api/endpoint', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            note_title: title,
+            note_content: htmlContent  
+        })
+    });
+};
 
     return(
         <>
