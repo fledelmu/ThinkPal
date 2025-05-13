@@ -1,0 +1,63 @@
+import axios from 'axios';
+
+
+const URL =import.meta.env.LOCALHOST || 'http://localhost:5000';
+
+const postNote = async (note) => {
+    try{
+        const response = await axios.post(`${URL}/notes`, {
+            notes: note,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error posting note:', error);
+        throw error;
+    }
+}
+
+const getNotes = async () => {
+    try {
+        const response = await axios.get(`${URL}/notes`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching notes:', error);
+        throw error;
+    }
+};
+
+const updateNote = async (note_num, title_num, note) => {
+    try {
+        const response = await axios.put(`${URL}/notes/${note_num}`, {
+            title_num: title_num,
+            notes: note
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating note:', error);
+        throw error;
+    }
+};
+
+const deleteNote = async (note_num) => {
+    try {
+        const response = await axios.delete(`${URL}/notes/${note_num}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting note:', error);
+        throw error;
+    }
+};
+
+const postTitle = async (title) => {
+    try {
+        const response = await axios.post(`${URL}/titles`, {
+            note_title: title,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error posting title:', error);
+        throw error;
+    }
+};
+
+export { postNote, getNotes, updateNote, deleteNote, postTitle };
