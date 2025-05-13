@@ -52,6 +52,7 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
+# Question Generation Model
 tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
 model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
 
@@ -123,7 +124,7 @@ def create_title():
     new_title = Title(note_title=data['note_title'])
     db.session.add(new_title)
     db.session.commit()
-    return jsonify({'title_num': new_title.title_num, 'note_title': new_title.note_title}), 201
+    return jsonify({'note_title': new_title.note_title}), 201
 
 @app.route('/titles/<int:title_num>', methods=['PUT'])
 def update_title(title_num):
@@ -151,7 +152,8 @@ def get_notes():
 @app.route('/notes', methods=['POST'])
 def create_note():
     data = request.get_json()
-    new_note = Note(title_num=data['title_num'], notes=data['notes'])
+    latest_title = Title.query.order_by(Title.title_num.desc()).first()
+    new_note = Note(title_num=latest_title.title_num, notes=data['notes'])
     db.session.add(new_note)
     db.session.commit()
     return jsonify({'note_num': new_note.note_num, 'title_num': new_note.title_num, 'notes': new_note.notes}), 201

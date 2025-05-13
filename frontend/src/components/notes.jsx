@@ -1,9 +1,10 @@
 import notebook_image from '../assets/images/notebook_img.png';
 import add_icon from '../assets/icons/add_icon.png';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useDropzone } from 'react-dropzone';
+import { postNote, postTitle } from '../utils/api.js';
 
 // Start of search components
 const SearchNotes = () => {
@@ -124,8 +125,12 @@ const AddPDFNote = ({ onExit, onAddNote }) => {
 // Add Note Option #1
 const AddNote = ({ onExit }) => {
     const [value, setValue] = useState('');
+    const [title, setTitle] = useState('');
 
 
+    const quillRef = useRef(null);
+
+    // Quill editor toolbar options
     const Size = Quill.import('formats/size');
     Size.whitelist = ['8px', '10px', '12px', '14px', '18px', '24px', '36px', '48px', '64px', '96px', '128px'];
     Quill.register(Size, true);
@@ -145,6 +150,17 @@ const AddNote = ({ onExit }) => {
             ['clean']
         ]
     };
+
+    // Extract text from the Quill editor
+    const handleSave = async () => {
+        const editor = quillRef.current.getEditor();
+        const text = editor.getText();
+        const html = editor.root.innerHTML;
+
+        postTitle(title);
+        postNote(html);
+    }
+
     return (
         <div className='fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center  z-50'>
             <div className='bg-rule-60 w-[85vw] h-[95vh] rounded-xl flex flex-col'>
@@ -152,16 +168,23 @@ const AddNote = ({ onExit }) => {
                     <button onClick={onExit} className='bg-rule-10 h-[30px] w-[50px] m-8 text-black flex items-center justify-center'>
                         Exit
                     </button>
-                    <button className='bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center'>
+                    <button onClick={handleSave} className='bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center'>
                         Save
                     </button>
                 </div>
                 <div className='bg-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5 '>
                         <h2 className='text-2xl m-5 font-bold text-rule-30'>Title:</h2>
-                        <input className='border-2 w-[20%]' type='text' placeholder='Enter Title'></input>
+                        <input 
+                        className='border-2 w-[20%]' 
+                        type='text' 
+                        placeholder='Enter Title'
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        />
                     </div>
                 <div className='h-[92%] overflow-y-hidden'>
                     <ReactQuill
+                    ref={quillRef}
                     style={{ height: "100%" }}
                     theme="snow"
                     value={value}
