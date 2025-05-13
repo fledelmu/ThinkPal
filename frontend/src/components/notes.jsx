@@ -216,11 +216,31 @@ const NotesList = () => {
                     <img src={add_icon} alt='add icon' className='w-[20%] h-[20%] rounded-xl'/>
                 </button>   
                 {items.map((_, idx) => (
-                    <button key={idx} className='bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white'>
-                        <img src={notebook_image} alt='notebook image' className='w-full h-full rounded-xl'/>
-                    </button>
+                    <div key={idx} className='relative group bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white overflow-hidden'>
+                        <img
+                            src={notebook_image}
+                            alt='notebook image'
+                            className='w-full h-full rounded-xl object-cover'
+                        />
+
+                        {/* Overlay on hover */}
+                        <div className='absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                            <h3 className='mb-10'>Test {idx+1}</h3>
+                            <button
+                                className='text-black bg-rule-10 px-3 py-1 rounded'
+                                onClick={() => console.log(`Overlay action on item ${idx}`)}
+                            >
+                                Open
+                            </button>
+                            <button
+                                className='text-black bg-rule-10 m-2  px-3 py-1 rounded'
+                                onClick={() => console.log(`Overlay action on item ${idx}`)}
+                            >
+                                Edit
+                            </button>
+                        </div>
+                    </div>
                 ))}
-                
             </div>
 
             {modal && (
