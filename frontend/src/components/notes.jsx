@@ -1,10 +1,10 @@
 import notebook_image from '../assets/images/notebook_img.png';
 import add_icon from '../assets/icons/add_icon.png';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, use } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useDropzone } from 'react-dropzone';
-import { postNote, postTitle, getTitle } from '../utils/api.js';
+import { postNote, getSelectedNote, getNote,updateNote, postTitle, getTitle, getSelectedTitle, updateTitle } from '../utils/api.js';
 
 // Start of search components
 const SearchNotes = () => {
@@ -123,10 +123,27 @@ const AddPDFNote = ({ onExit, onAddNote }) => {
 
 
 // Add Note Option #1
-const AddNote = ({ onExit }) => {
+const AddNote = ({ onExit, note=null, onSave }) => {
     const [value, setValue] = useState('');
     const [title, setTitle] = useState('');
+    const [exists, checkExistance] = useState(false);
     const quillRef = useRef(null);
+    
+
+    const loadData = async () => {
+            if (note) {
+                setValue(note.notes);
+                const title = await getSelectedTitle(note.title_num);
+                checkExistance(true);
+                setTitle(title.note_title);
+            }
+        }
+
+    useEffect(() => {
+        console.log("Note received:", note);
+        
+        loadData();
+    }, [note]);
 
     // Quill editor toolbar options
     const Size = Quill.import('formats/size');
@@ -154,6 +171,7 @@ const AddNote = ({ onExit }) => {
         const editor = quillRef.current.getEditor();
         const text = editor.getText().trim();
         const html = editor.root.innerHTML.trim();
+        const key = note.title_num;
 
         const defaultTitle = 'Untitled Note';
         const defaultContent = '<p><em>No content provided.</em></p>';
@@ -162,8 +180,15 @@ const AddNote = ({ onExit }) => {
         const finalTitle = title.trim() === '' ? defaultTitle : title.trim();
         const finalContent = (text === '' || html === '<p><br></p>') ? defaultContent : html;
 
-        postTitle(finalTitle);
-        postNote(finalContent);
+        if (exists) {
+            updateNote(key, finalContent)
+            updateTitle(key, finalTitle);
+        } else {
+            postTitle(finalTitle);
+            postNote(finalContent); 
+        }
+
+        
     }
 
     return (
@@ -212,15 +237,30 @@ const NotesList = () => {
     const [modal, popUp] = useState(false);
     const [addNote, showAddNote] = useState(false);
     const [titles, setTitle] = useState([]);
+    const [selectedNote, setSelectedNote] = useState(null);
 
+
+    // Displays the list
     const loadNotes = async () => {
         try{
-            const response = await getTitle();
-            setTitle(response);
+            const titles = await getTitle();
+            setTitle(titles);
         } catch (error) {
             console.error('Bruh ', error);
         }
-    }
+    }  
+
+    // Open an existing note
+    const openNote = async (key) => {
+        try{
+            const existingNote = await getSelectedNote(key);
+            console.log(existingNote);
+            setSelectedNote(existingNote);
+            showAddNote(true);
+        } catch (error) {
+            console.error('Error fetching note:', error);
+        }
+    };
 
     useEffect(() => {
         loadNotes();
@@ -245,7 +285,7 @@ const NotesList = () => {
                             <h3 className='mb-10'>{title.note_title}</h3>
                             <button
                                 className='text-black bg-rule-10 px-3 m-5 py-1 rounded'
-                                onClick={() => console.log(`Overlay action on item ${idx}`)}
+                                onClick={() => openNote(title.title_num)}
                             >
                                 Open
                             </button>
@@ -264,12 +304,18 @@ const NotesList = () => {
             )}
 
             {addNote && (
-                <AddNote onExit={() => showAddNote(false)}/>
+                <AddNote 
+                note={selectedNote}
+                onExit={() => {
+                    showAddNote(false);
+                    setSelectedNote(null);
+                    loadNotes();
+                }}/>
             )}
 
 
         </>
-        
+
     )
 }
 

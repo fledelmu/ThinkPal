@@ -17,7 +17,7 @@ const postNote = async (note) => {
     }
 }
 
-const getNotes = async () => {
+const getNote = async () => {
     try {
         const response = await axios.get(`${URL}/notes`);
         return response.data;
@@ -27,10 +27,20 @@ const getNotes = async () => {
     }
 };
 
-const updateNote = async (note_num, title_num, note) => {
+const getSelectedNote = async (note_num) => {
+    try{
+        const response = await axios.get(`${URL}/notes/${note_num}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching notes:', error);
+        throw error;
+    }
+} 
+
+const updateNote = async (note_num, note) => {
     try {
         const response = await axios.put(`${URL}/notes/${note_num}`, {
-            title_num: title_num,
+            title_num: note_num,
             notes: note
         });
         return response.data;
@@ -64,6 +74,18 @@ const postTitle = async (title) => {
     }
 };
 
+const updateTitle = async (title_num, title) => {
+    try {
+        const response = await axios.put(`${URL}/titles/${title_num}`, {
+            note_title: title,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating title:', error);
+        throw error;
+    }
+};
+
 const getTitle = async () => {
     try{
         const response = await axios.get(`${URL}/titles`);
@@ -74,4 +96,16 @@ const getTitle = async () => {
     }
 };
 
-export { postNote, getNotes, updateNote, deleteNote, postTitle, getTitle };
+const getSelectedTitle = async (title_num) => {
+    try{
+        const response = await axios.get(`${URL}/titles/${title_num}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching titles:', error);
+        throw error;
+    }
+};
+
+export { postNote, getSelectedNote, getNote, updateNote, deleteNote, // Note methods
+        postTitle, updateTitle, getSelectedTitle, getTitle  // Title methods
+};
