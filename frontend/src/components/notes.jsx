@@ -1,10 +1,10 @@
 import notebook_image from '../assets/images/notebook_img.png';
 import add_icon from '../assets/icons/add_icon.png';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useDropzone } from 'react-dropzone';
-import { postNote, postTitle } from '../utils/api.js';
+import { postNote, postTitle, getTitle } from '../utils/api.js';
 
 // Start of search components
 const SearchNotes = () => {
@@ -126,8 +126,6 @@ const AddPDFNote = ({ onExit, onAddNote }) => {
 const AddNote = ({ onExit }) => {
     const [value, setValue] = useState('');
     const [title, setTitle] = useState('');
-
-
     const quillRef = useRef(null);
 
     // Quill editor toolbar options
@@ -154,11 +152,18 @@ const AddNote = ({ onExit }) => {
     // Extract text from the Quill editor
     const handleSave = async () => {
         const editor = quillRef.current.getEditor();
-        const text = editor.getText();
-        const html = editor.root.innerHTML;
+        const text = editor.getText().trim();
+        const html = editor.root.innerHTML.trim();
 
-        postTitle(title);
-        postNote(html);
+        const defaultTitle = 'Untitled Note';
+        const defaultContent = '<p><em>No content provided.</em></p>';
+
+
+        const finalTitle = title.trim() === '' ? defaultTitle : title.trim();
+        const finalContent = (text === '' || html === '<p><br></p>') ? defaultContent : html;
+
+        postTitle(finalTitle);
+        postNote(finalContent);
     }
 
     return (
@@ -204,10 +209,22 @@ const AddNote = ({ onExit }) => {
 
 
 const NotesList = () => {   
-    const items = Array(10).fill("");
     const [modal, popUp] = useState(false);
     const [addNote, showAddNote] = useState(false);
+    const [titles, setTitle] = useState([]);
 
+    const loadNotes = async () => {
+        try{
+            const response = await getTitle();
+            setTitle(response);
+        } catch (error) {
+            console.error('Bruh ', error);
+        }
+    }
+
+    useEffect(() => {
+        loadNotes();
+    }, []);
 
     return(
         <>
@@ -215,8 +232,8 @@ const NotesList = () => {
                 <button onClick={() => popUp(true)} className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white flex items-center justify-center '>
                     <img src={add_icon} alt='add icon' className='w-[20%] h-[20%] rounded-xl'/>
                 </button>   
-                {items.map((_, idx) => (
-                    <div key={idx} className='relative group bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white overflow-hidden'>
+                {titles.map((title, idx) => (
+                    <div key={title.title_num} className='relative group bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white overflow-hidden'>
                         <img
                             src={notebook_image}
                             alt='notebook image'
@@ -225,18 +242,12 @@ const NotesList = () => {
 
                         {/* Overlay on hover */}
                         <div className='absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-                            <h3 className='mb-10'>Test {idx+1}</h3>
+                            <h3 className='mb-10'>{title.note_title}</h3>
                             <button
-                                className='text-black bg-rule-10 px-3 py-1 rounded'
+                                className='text-black bg-rule-10 px-3 m-5 py-1 rounded'
                                 onClick={() => console.log(`Overlay action on item ${idx}`)}
                             >
                                 Open
-                            </button>
-                            <button
-                                className='text-black bg-rule-10 m-2  px-3 py-1 rounded'
-                                onClick={() => console.log(`Overlay action on item ${idx}`)}
-                            >
-                                Edit
                             </button>
                         </div>
                     </div>
@@ -261,6 +272,7 @@ const NotesList = () => {
         
     )
 }
+
 // End of notes components
 
 const Notes = () => {
