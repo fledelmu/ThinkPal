@@ -36,19 +36,19 @@ class Title(db.Model):
     __tablename__ = 'tbl_titles'
     title_num = db.Column(db.Integer, primary_key=True)
     note_title = db.Column(db.String(255), nullable=False)
-    notes = db.relationship('Note', backref='title', lazy=True)
+    notes = db.relationship('Note', backref='title', lazy=True, cascade="all, delete")
 
 class Note(db.Model):
     __tablename__ = 'tbl_note'
     note_num = db.Column(db.Integer, primary_key=True)
-    title_num = db.Column(db.Integer, db.ForeignKey('tbl_titles.title_num'), nullable=False)
+    title_num = db.Column(db.Integer, db.ForeignKey('tbl_titles.title_num', ondelete="CASCADE"), nullable=False)
     notes = db.Column(db.Text, nullable=False)
-    quizzes = db.relationship('Quiz', backref='note', lazy=True)
+    quizzes = db.relationship('Quiz', backref='note', lazy=True, cascade="all, delete")
 
 class Quiz(db.Model):
     __tablename__ = 'tbl_quiz'
     quiz_num = db.Column(db.Integer, primary_key=True)
-    note_num = db.Column(db.Integer, db.ForeignKey('tbl_note.note_num'), nullable=False)
+    note_num = db.Column(db.Integer, db.ForeignKey('tbl_note.note_num', ondelete="CASCADE"), nullable=False)
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
@@ -78,9 +78,19 @@ def save_ai_quiz_to_db(note_num, qa_pairs):
 def generate_quiz():
     data = request.get_json()
     note_num = data.get('note_num')
-    input_text = data.get('text')
-    if not note_num or not input_text:
-        return jsonify({'error': 'note_num and text are required'}), 400
+    title_num = data.get('title_num')
+    note = None
+    if note_num:
+        note = Note.query.get(note_num)
+        if not note:
+            return jsonify({'error': f'Note with note_num={note_num} does not exist.'}), 404
+    elif title_num:
+        note = Note.query.filter_by(title_num=title_num).order_by(Note.note_num.desc()).first()
+        if not note:
+            return jsonify({'error': f'No notes found for title_num={title_num}.'}), 404
+    else:
+        return jsonify({'error': 'Either note_num or title_num is required'}), 400
+    input_text = note.notes
     prompt = "e2e question generation: " + input_text
     inputs_qg = tokenizer_qg.encode(prompt, return_tensors="pt")
     outputs_qg = model_qg.generate(inputs_qg, max_length=256, num_beams=5, early_stopping=True)
@@ -95,7 +105,7 @@ def generate_quiz():
         answer_ids = inputs_qa["input_ids"][0][start_index:end_index + 1]
         answer = tokenizer_qa.convert_tokens_to_string(tokenizer_qa.convert_ids_to_tokens(answer_ids))
         qa_pairs.append({"question": question, "answer": answer})
-    save_ai_quiz_to_db(note_num, qa_pairs)
+    save_ai_quiz_to_db(note.note_num, qa_pairs)
     return jsonify({'message': 'Quiz generated and saved', 'quiz': qa_pairs})
 
 # Utility: PDF to plain text
