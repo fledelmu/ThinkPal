@@ -106,6 +106,30 @@ const getSelectedTitle = async (title_num) => {
     }
 };
 
+const generateQuiz = async (title_num, text) => {
+    try {
+        const response = await axios.post(`${URL}/generate_quiz`, {
+            title_num: title_num,
+            plain_text: text
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error generating quiz:', error);
+        throw error;
+    }
+};
+
+const getQuizzes = async () => {
+    try {
+        const response = await axios.get(`${URL}/quizzes`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        throw error;
+    }
+};
+
 export { postNote, getSelectedNote, getNote, updateNote, deleteNote, // Note methods
-        postTitle, updateTitle, getSelectedTitle, getTitle  // Title methods
+        postTitle, updateTitle, getSelectedTitle, getTitle, // Title methods
+        generateQuiz, getQuizzes// Quiz methods
 };

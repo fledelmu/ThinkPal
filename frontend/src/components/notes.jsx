@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, use } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useDropzone } from 'react-dropzone';
-import { postNote, getSelectedNote, getNote,updateNote, postTitle, getTitle, getSelectedTitle, updateTitle } from '../utils/api.js';
+import { postNote, getSelectedNote, getNote,updateNote, postTitle, getTitle, getSelectedTitle, updateTitle, generateQuiz} from '../utils/api.js';
 
 // Start of search components
 const SearchNotes = () => {
@@ -128,7 +128,6 @@ const AddNote = ({ onExit, note=null, onSave }) => {
     const [title, setTitle] = useState('');
     const [exists, checkExistance] = useState(false);
     const quillRef = useRef(null);
-    
 
     const loadData = async () => {
             if (note) {
@@ -169,20 +168,22 @@ const AddNote = ({ onExit, note=null, onSave }) => {
     // Extract text from the Quill editor
     const handleSave = async () => {
         const editor = quillRef.current.getEditor();
-        const text = editor.getText().trim();
+        const plain_text = editor.getText().trim();
         const html = editor.root.innerHTML.trim();
-        const key = note.title_num;
+        
 
         const defaultTitle = 'Untitled Note';
         const defaultContent = '<p><em>No content provided.</em></p>';
 
 
         const finalTitle = title.trim() === '' ? defaultTitle : title.trim();
-        const finalContent = (text === '' || html === '<p><br></p>') ? defaultContent : html;
+        const finalContent = (plain_text === '' || html === '<p><br></p>') ? defaultContent : html;
 
         if (exists) {
+            const key = note.title_num;
             updateNote(key, finalContent)
             updateTitle(key, finalTitle);
+            generateQuiz(key, plain_text);
         } else {
             postTitle(finalTitle);
             postNote(finalContent); 
@@ -272,7 +273,7 @@ const NotesList = () => {
                 <button onClick={() => popUp(true)} className='bg-rule-30 h-[200px] w-[175px] m-8 rounded-xl text-white flex items-center justify-center '>
                     <img src={add_icon} alt='add icon' className='w-[20%] h-[20%] rounded-xl'/>
                 </button>   
-                {titles.map((title, idx) => (
+                {titles.map((title) => (
                     <div key={title.title_num} className='relative group bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white overflow-hidden'>
                         <img
                             src={notebook_image}
@@ -303,8 +304,7 @@ const NotesList = () => {
                 />
             )}
 
-            {addNote && (
-                <AddNote 
+            {addNote && (<AddNote 
                 note={selectedNote}
                 onExit={() => {
                     showAddNote(false);
