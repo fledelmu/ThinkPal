@@ -128,6 +128,13 @@ def get_titles():
     titles = Title.query.all()
     return jsonify([{'title_num': t.title_num, 'note_title': t.note_title} for t in titles])
 
+@app.route('/titles/<int:title_num>', methods=['GET'])
+def get_selected_titles(title_num):
+    title = Title.query.filter_by(title_num=title_num).first()
+    return jsonify({
+        'title_num': title.title_num, 
+        'note_title': title.note_title})
+
 @app.route('/titles', methods=['POST'])
 def create_title():
     data = request.get_json()
@@ -159,6 +166,14 @@ def get_notes():
         {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes} for n in notes
     ])
 
+@app.route('/notes/<int:title_num>', methods=['GET'])
+def get_selected_notes(title_num):  
+    note = Note.query.filter_by(title_num=title_num).first()
+    return jsonify({
+        'note_num': note.note_num,
+        'title_num': note.title_num, 
+        'notes': note.notes
+    })
 
 @app.route('/notes', methods=['POST'])
 def create_note():
