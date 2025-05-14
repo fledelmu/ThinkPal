@@ -3,6 +3,8 @@ import axios from 'axios';
 
 const URL =import.meta.env.LOCALHOST || 'http://localhost:5000';
 
+
+// Note API
 const postNote = async (note) => {
     try{
         const response = await axios.post(`${URL}/notes`, {
@@ -48,6 +50,8 @@ const deleteNote = async (note_num) => {
     }
 };
 
+// Title API
+
 const postTitle = async (title) => {
     try {
         const response = await axios.post(`${URL}/titles`, {
@@ -60,4 +64,14 @@ const postTitle = async (title) => {
     }
 };
 
-export { postNote, getNotes, updateNote, deleteNote, postTitle };
+const getTitle = async () => {
+    try{
+        const response = await axios.get(`${URL}/titles`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching titles:', error);
+        throw error;
+    }
+};
+
+export { postNote, getNotes, updateNote, deleteNote, postTitle, getTitle };

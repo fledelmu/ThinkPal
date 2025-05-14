@@ -149,6 +149,7 @@ def get_notes():
         {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes} for n in notes
     ])
 
+
 @app.route('/notes', methods=['POST'])
 def create_note():
     data = request.get_json()
