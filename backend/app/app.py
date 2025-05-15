@@ -77,19 +77,16 @@ def save_ai_quiz_to_db(note_num, qa_pairs):
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     data = request.get_json()
-    note_num = data.get('note_num')
     title_num = data.get('title_num')
+    text = data.get('plain_text')
     note = None
-    if note_num:
-        note = Note.query.get(note_num)
+    if title_num:
+        note = Note.query.get(title_num)
         if not note:
-            return jsonify({'error': f'Note with note_num={note_num} does not exist.'}), 404
-    elif title_num:
-        note = Note.query.filter_by(title_num=title_num).order_by(Note.note_num.desc()).first()
-        if not note:
-            return jsonify({'error': f'No notes found for title_num={title_num}.'}), 404
+            return jsonify({'error': f'Note with note_num={title_num} does not exist.'}), 404
     else:
         return jsonify({'error': 'Either note_num or title_num is required'}), 400
+    
     input_text = note.notes
     prompt = "e2e question generation: " + input_text
     inputs_qg = tokenizer_qg.encode(prompt, return_tensors="pt")
