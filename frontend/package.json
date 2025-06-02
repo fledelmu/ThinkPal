@@ -12,10 +12,11 @@
   "dependencies": {
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^5.3.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
+    "react-pdf": "^9.2.1",
     "react-quill-new": "^3.4.6"
   },
   "devDependencies": {
