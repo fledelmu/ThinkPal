@@ -1,16 +1,17 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from werkzeug.utils import secure_filename
+
 import PyPDF2
-
+import requests 
 import os
-import torch
-
+import torch 
+import google.generativeai as genai
 load_dotenv()
+
 
 app = Flask(__name__)
 CORS(app)
@@ -52,13 +53,45 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
-# Question Generation Model
-tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
-model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
+HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
 
-# Question Answering Model
-tokenizer_qa = AutoTokenizer.from_pretrained("bert-large-uncased-whole-word-masking-finetuned-squad")
-model_qa = AutoModelForQuestionAnswering.from_pretrained("bert-large-uncased-whole-word-masking-finetuned-squad")
+if not HUGGINGFACE_API_KEY:
+    print("WARNING: HUGGINGFACE_API_KEY not found in environment variables. Hugging Face API features might be unavailable.")
+
+
+QG_API_URL = "https://api-inference.huggingface.co/models/valhalla/t5-base-e2e-qg"
+QA_API_URL = "https://api-inference.huggingface.co/models/bert-large-uncased-whole-word-masking-finetuned-squad"
+
+HEADERS = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
+
+# Helper function to make requests to the Hugging Face Inference API
+def query_hf_api(api_url, payload):
+    # Use the correctly named API key variable here
+    if not HUGGINGFACE_API_KEY:
+        print("Error: Hugging Face API token is not set. Cannot make API call.")
+        return None
+    try:
+        response = requests.post(api_url, headers=HEADERS, json=payload)
+        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Hugging Face API at {api_url}: {e}")
+        return None
+
+# Initialize Gemini Pro model if API key is set
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if GEMINI_API_KEY:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash-8b') # Changed to gemini-1.5-flash-8b
+        print("Gemini 1.5 Flash-8B model initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing Gemini model: {e}")
+        print("Ensure your API key is correct and the model name is valid for your region.")
+        gemini_model = None
+else:
+    print("GEMINI_API_KEY not found in environment variables. Gemini features will be unavailable.")
+    gemini_model = None
 
 @app.route('/')
 def home():
@@ -88,20 +121,43 @@ def generate_quiz():
         return jsonify({'error': 'Either note_num or title_num is required'}), 400
     
     input_text = note.notes
-    prompt = "e2e question generation: " + input_text
-    inputs_qg = tokenizer_qg.encode(prompt, return_tensors="pt")
-    outputs_qg = model_qg.generate(inputs_qg, max_length=256, num_beams=5, early_stopping=True)
-    decoded_output = tokenizer_qg.decode(outputs_qg[0], skip_special_tokens=True)
+
+    # Question Generation via API
+    qg_payload = {"inputs": "e2e question generation: " + input_text}
+    qg_response = query_hf_api(QG_API_URL, qg_payload)
+
+    if qg_response is None:
+        return jsonify({'error': 'Failed to generate questions from Hugging Face API (QG).'}), 500
+    if not isinstance(qg_response, list) or not qg_response or 'generated_text' not in qg_response[0]:
+        print(f"Unexpected QG API response format: {qg_response}")
+        return jsonify({'error': 'Unexpected response format from Question Generation API.'}), 500
+
+    decoded_output = qg_response[0]['generated_text']
     questions = [q.strip() for q in decoded_output.split("<sep>") if q.strip()]
+    
     qa_pairs = []
     for question in questions:
-        inputs_qa = tokenizer_qa.encode_plus(question, input_text, return_tensors="pt")
-        outputs_qa = model_qa(**inputs_qa)
-        start_index = torch.argmax(outputs_qa.start_logits)
-        end_index = torch.argmax(outputs_qa.end_logits)
-        answer_ids = inputs_qa["input_ids"][0][start_index:end_index + 1]
-        answer = tokenizer_qa.convert_tokens_to_string(tokenizer_qa.convert_ids_to_tokens(answer_ids))
+        # Question Answering via API
+        qa_payload = {
+            "inputs": {
+                "question": question,
+                "context": input_text
+            }
+        }
+        qa_response = query_hf_api(QA_API_URL, qa_payload)
+
+        if qa_response is None:
+            print(f"Failed to get answer for question: {question}. Skipping.")
+            continue
+
+        if not isinstance(qa_response, list) or not qa_response or 'answer' not in qa_response[0]:
+            print(f"Unexpected QA API response format for question '{question}': {qa_response}. Skipping.")
+            continue
+
+        answer = qa_response[0]['answer']
         qa_pairs.append({"question": question, "answer": answer})
+    
+
     save_ai_quiz_to_db(note.note_num, qa_pairs)
     return jsonify({'message': 'Quiz generated and saved', 'quiz': qa_pairs})
 
@@ -116,6 +172,60 @@ def pdf_to_text(pdf_path, txt_path):
     with open(txt_path, 'w', encoding='utf-8') as txt_file:
         txt_file.write(text)
     return txt_path
+
+# --- NEW: Gemini Insight Endpoints (for testing in backend) ---
+
+@app.route('/gemini/elaborate_note', methods=['POST']) # Endpoint name changed
+def gemini_elaborate_note(): # Function name changed
+    if not gemini_model:
+        return jsonify({'error': 'Gemini model not initialized. Check API key.'}), 500
+
+    data = request.get_json()
+    note_content = data.get('note_content')
+
+    if not note_content:
+        return jsonify({'error': 'No note_content provided for elaboration.'}), 400
+
+    try:
+        # Prompt specifically for a *brief* but meaningful elaboration
+        prompt = f"""Review the following study notes. Add a small amount of relevant, clarifying detail or context to each main point, making the notes slightly more comprehensive without significantly increasing their length. Avoid deep dives or extensive new information. Focus on making existing points clearer and and adding minor, helpful expansions.
+
+        Original Notes:
+        {note_content}
+
+        Expanded Notes:
+        """
+        response = gemini_model.generate_content(prompt)
+        elaborated_notes = response.text # Variable name changed
+
+        return jsonify({'elaborated_notes': elaborated_notes}) # Key name changed
+    except Exception as e:
+        return jsonify({'error': f'Failed to elaborate notes with Gemini: {str(e)}'}), 500
+    
+@app.route('/gemini/extract_insights', methods=['POST'])
+def gemini_extract_insights():
+    if not gemini_model:
+        return jsonify({'error': 'Gemini model not initialized. Check API key.'}), 500
+
+    data = request.get_json()
+    note_content = data.get('note_content')
+    if not note_content:
+        return jsonify({'error': 'No note_content provided for insight extraction.'}), 400
+
+    try:
+        # Modified prompt to request HTML formatting
+        prompt = f"""Analyze the following study notes and provide only the 'Key Insights' and 'Important Concepts' derived from them. Do not include sections for 'Potential Areas of Confusion' or 'Related Topics for Further Study'.
+
+        **Format your response as valid HTML.** Use appropriate HTML tags like `<h2>`, `<ul>`, `<li>`, `<strong>`, `<p>` for clear structure and readability.
+
+        Study Notes:\n\n{note_content}
+        """
+        response = gemini_model.generate_content(prompt)
+        insights_html = response.text
+        return jsonify({'insights_html': insights_html}) 
+    except Exception as e:
+        return jsonify({'error': f'Failed to extract insights with Gemini: {str(e)}'}), 500
+
 
 # CRUD API ENDPOINTS 
 
