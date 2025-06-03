@@ -49,10 +49,10 @@ const SearchContainer = () => {
 // Start of notes components
 const AddNoteOptions = ({ onExit }) => {
   const [addPDFNote, showAddPDFNote] = useState(false)
-  // New state to track when to show the AddNote component with PDF text
+  const [showAddNoteEditor, setShowAddNoteEditor] = useState(false)
   const [pdfText, setPdfText] = useState(null)
 
-  // Function to handle PDF text extraction
+
   const handlePdfTextExtracted = (text) => {
     setPdfText(text)
   }
@@ -60,8 +60,7 @@ const AddNoteOptions = ({ onExit }) => {
   return (
     <>
       <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50">
-        {/* Show AddNote if we have PDF text */}
-        {pdfText ? (
+        {showAddNoteEditor || pdfText ? (
           <AddNote
             note={{ notes: pdfText }}
             onExit={() => {
@@ -75,8 +74,8 @@ const AddNoteOptions = ({ onExit }) => {
               <div className="bg-rule-bg w-full h-full flex flex-row items-center justify-center gap-5">
                 <button
                   onClick={() => {
-                    // Show empty AddNote component
                     setPdfText("")
+                    setShowAddNoteEditor(true)
                   }}
                   className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white"
                 >
@@ -206,7 +205,23 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       ["clean"],
     ],
   }
+  const createQuiz = async () => {
+    const editor = quillRef.current.getEditor()
+    const plain_text = editor.getText().trim()
 
+    if (!plain_text || plain_text === "") {
+      alert("Cannot generate quiz from empty content.")
+      return
+    }
+
+    const noteKey = exists ? note.title_num : null
+    if (!noteKey) {
+      alert("Please save the note first before generating a quiz.")
+      return
+    }
+
+    generateQuiz(noteKey, plain_text)
+  }
   // Extract text from the Quill editor
   const handleSave = async () => {
     const editor = quillRef.current.getEditor()
@@ -223,7 +238,6 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       const key = note.title_num
       updateNote(key, finalContent)
       updateTitle(key, finalTitle)
-      generateQuiz(key, plain_text)
     } else {
       postTitle(finalTitle)
       postNote(finalContent)
@@ -233,10 +247,10 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   return (
     <div className="fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center  z-50">
       <div className="bg-rule-bg w-[85vw] h-[95vh] rounded-xl flex flex-col">
-        <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl w-full">
+        <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
             onClick={onExit}
-            className="bg-rule-10 h-[30px] w-[50px] m-8 text-black flex items-center justify-center rounded-sm"
+            className="bg-rule-10 h-[30px] w-[50px] ml-5 text-black flex items-center justify-center rounded-sm"
           >
             Exit
           </button>
@@ -245,6 +259,12 @@ const AddNote = ({ onExit, note = null, onSave }) => {
             className="bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center rounded-sm"
           >
             Save
+          </button>
+          <button
+            onClick={createQuiz}
+            className="bg-rule-10 h-[30px] w-[100px] text-black flex items-center justify-center rounded-sm"
+          >
+            Generate Quiz
           </button>
         </div>
         <div className="bg-rule-bg border-l-2 border-r-2 border-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5">

@@ -60,11 +60,13 @@ const QuizCard = ({ quizData }) => {
 
     return (
         <div className='w-full h-full flex flex-col items-center justify-center'>
-            <div className='flex flex-col items-center justify-center bg-rule-60 w-[70%] h-[70%] m-2 rounded-xl text-white'>
+            <div className='relative flex flex-col items-center justify-center bg-rule-60 w-[70%] h-[70%] m-2 rounded-xl text-white'>
+                <div className='absolute top-5 right-5 text-2xl font-bold'>{score}</div>
                 <h3 className='text-center text-2xl w-[80%]'>
                     {currentQuiz.question}
                 </h3>
             </div>
+
             <div className='bg-rule-60 w-[65%] border-2 h-[5%] m-2 rounded-xl text-white flex flex-row items-center'>
                 <input
                     type='text'
@@ -150,7 +152,6 @@ const QuizList = () => {
                             alt='quiz image'
                             className='w-full h-full rounded-xl object-cover'
                         />
-
                         <div className='absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
                             <h3 className='mb-10'>
                                 {'Untitled Quiz ' + (index + 1)}
