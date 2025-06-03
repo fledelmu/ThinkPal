@@ -45,49 +45,76 @@ const SearchContainer = () => {
 }
 // End of search components
 
+
 // Start of notes components
-const AddNoteOptions = ({ onExit, onAddNote }) => {
+const AddNoteOptions = ({ onExit }) => {
   const [addPDFNote, showAddPDFNote] = useState(false)
+  // New state to track when to show the AddNote component with PDF text
+  const [pdfText, setPdfText] = useState(null)
+
+  // Function to handle PDF text extraction
+  const handlePdfTextExtracted = (text) => {
+    setPdfText(text)
+  }
 
   return (
     <>
       <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50">
-        <div className="bg-rule-30 w-[50%] h-[60%] flex flex-col items-center">
-          {!addPDFNote ? (
-            <div className="bg-rule-bg w-full h-full flex flex-row items-center justify-center gap-5">
-              <button onClick={onAddNote} className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white">
-                Add Note
-              </button>
-              <button
-                onClick={() => showAddPDFNote(true)}
-                className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white"
-              >
-                Add Note via PDF
+        {/* Show AddNote if we have PDF text */}
+        {pdfText ? (
+          <AddNote
+            note={{ notes: pdfText }}
+            onExit={() => {
+              setPdfText(null)
+              onExit()
+            }}
+          />
+        ) : (
+          <div className="bg-rule-30 w-[50%] h-[60%] flex flex-col items-center">
+            {!addPDFNote ? (
+              <div className="bg-rule-bg w-full h-full flex flex-row items-center justify-center gap-5">
+                <button
+                  onClick={() => {
+                    // Show empty AddNote component
+                    setPdfText("")
+                  }}
+                  className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white"
+                >
+                  Add Note
+                </button>
+                <button
+                  onClick={() => showAddPDFNote(true)}
+                  className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white"
+                >
+                  Add Note via PDF
+                </button>
+              </div>
+            ) : (
+              <AddPDFNote onExit={() => showAddPDFNote(false)} onTextExtracted={handlePdfTextExtracted} />
+            )}
+            <div className="flex flex-row items-center justify-end w-full h-[20%] bg-rule-60">
+              <button onClick={onExit} className="bg-rule-10 w-[100px] h-1 p-6 rounded-xl mr-10 flex items-center">
+                Cancel
               </button>
             </div>
-          ) : (
-            <AddPDFNote onExit={() => showAddPDFNote(false)} />
-          )}
-          <div className="flex flex-row items-center justify-end w-full h-[20%] bg-rule-60">
-            <button onClick={onExit} className="bg-rule-10 w-[100px] h-1 p-6 rounded-xl mr-10 flex items-center">
-              Cancel
-            </button>
           </div>
-        </div>
+        )}
       </div>
     </>
   )
 }
 
-const AddPDFNote = ({ onExit, onAddNote }) => {
+// Modified to use onTextExtracted instead of onAddNote
+const AddPDFNote = ({ onExit, onTextExtracted }) => {
   const [pdfText, setPdfText] = useState("")
 
   const onDrop = async (acceptedFiles) => {
     const file = acceptedFiles[0]
     if (file && file.type === "application/pdf") {
       const text = await extractTextFromPDF(file)
-      setPdfText(text) // Set the PDF content to be used in the Quill editor
-      onAddNote(text) // Pass this text to the AddNote component (Quill editor)
+      setPdfText(text)
+      // Call the callback with extracted text
+      onTextExtracted(text)
     } else {
       alert("Please drop a valid PDF file.")
     }
@@ -145,16 +172,18 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const loadData = async () => {
     if (note) {
       setValue(note.notes)
-      const title = await getSelectedTitle(note.title_num)
-      checkExistance(true)
-      setTitle(title.note_title)
+      if (note.title_num) {
+        const title = await getSelectedTitle(note.title_num)
+        checkExistance(true)
+        setTitle(title.note_title)
+      }
     }
   }
 
   useEffect(() => {
-    console.log("Note received:", note)
-
-    loadData()
+    if (note) {
+      loadData()
+    }
   }, [note])
 
   // Quill editor toolbar options
@@ -308,10 +337,9 @@ const NotesList = () => {
 
       {modal && (
         <AddNoteOptions
-          onExit={() => popUp(false)}
-          onAddNote={() => {
-            showAddNote(true)
+          onExit={() => {
             popUp(false)
+            loadNotes()
           }}
         />
       )}
@@ -329,6 +357,7 @@ const NotesList = () => {
     </>
   )
 }
+
 
 // End of notes components
 
