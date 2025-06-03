@@ -14,6 +14,7 @@ import {
   getSelectedTitle,
   updateTitle,
   generateQuiz,
+  elaborateNote
 } from "../utils/api.js"
 
 // Set the worker source for PDF.js - using a more reliable CDN path
@@ -166,6 +167,9 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const [value, setValue] = useState("")
   const [title, setTitle] = useState("")
   const [exists, checkExistance] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [elaboratedContent, setElaboratedContent] = useState("")
+  const [isElaborating, setIsElaborating] = useState(false)
   const quillRef = useRef(null)
 
   const loadData = async () => {
@@ -238,7 +242,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       const key = note.title_num
       updateNote(key, finalContent)
       updateTitle(key, finalTitle)
-    } else {
+    } else {  
       postTitle(finalTitle)
       postNote(finalContent)
     }
@@ -266,6 +270,37 @@ const AddNote = ({ onExit, note = null, onSave }) => {
           >
             Generate Quiz
           </button>
+          <button
+            onClick={async () => {
+              if (showPreview) {
+                setShowPreview(false);
+                setElaboratedContent("");
+                return;
+              }
+
+              const editor = quillRef.current?.getEditor();
+              const plainText = editor?.getText().trim();
+
+              if (!plainText) {
+                alert("Cannot elaborate empty notes.");
+                return;
+              }
+
+              setIsElaborating(true);
+              try {
+                const result = await elaborateNote(plainText); 
+                setElaboratedContent(result.elaborated_notes);
+                setShowPreview(true);
+              } catch (error) {
+                alert("Failed to elaborate notes.");
+              } finally {
+                setIsElaborating(false);
+              }
+            }}
+            className="bg-rule-10 h-[30px] w-[100px] text-black flex items-center justify-center rounded-sm"
+          >
+            {isElaborating ? "Loading..." : showPreview ? "Hide Preview" : "Elaborate"}
+          </button>
         </div>
         <div className="bg-rule-bg border-l-2 border-r-2 border-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5">
           <input
@@ -276,16 +311,29 @@ const AddNote = ({ onExit, note = null, onSave }) => {
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
-        <div className="h-[92%] overflow-y-hidden border-l-2 border-r-2 border-b-2 border-rule-60 ">
-          <ReactQuill
-            ref={quillRef}
-            style={{ height: "100%" }}
-            theme="snow"
-            value={value}
-            onChange={setValue}
-            modules={modules}
-            placeholder="Start writing here..."
-          />
+        <div className="h-[92%] flex flex-row overflow-hidden border-l-2 border-r-2 border-b-2 border-rule-60">
+          {/* Quill Editor on the left */}
+          <div className={showPreview ? "w-1/2" : "w-full"}>
+            <ReactQuill
+              ref={quillRef}
+              style={{ height: "100%" }}
+              theme="snow"
+              value={value}
+              onChange={setValue}
+              modules={modules}
+              placeholder="Start writing here..."
+            />
+          </div>
+
+          {showPreview && (
+            <div className="w-1/2 bg-rule-bg text-black p-4 overflow-auto">
+              <h2 className="text-lg font-semibold mb-2">Elaboration:</h2>
+              <div
+                className="prose"
+                dangerouslySetInnerHTML={{ __html: elaboratedContent }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -326,7 +374,7 @@ const NotesList = () => {
 
   return (
     <>
-      <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap">
+      <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap overflow-y-auto">
         <button
           onClick={() => popUp(true)}
           className="bg-rule-60 h-[200px] w-[175px] m-8 rounded-xl text-rule-text flex items-center justify-center "
