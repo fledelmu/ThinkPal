@@ -141,7 +141,7 @@ const QuizList = () => {
 
     return (
         <>
-            <div className='bg-rule-bg grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
+            <div className='bg-rule-bg grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-y-auto'>
                 {quizzes.map((quiz, index) => (
                     <div
                         key={quiz.quiz_num}
