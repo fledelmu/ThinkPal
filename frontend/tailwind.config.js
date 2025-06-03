@@ -8,10 +8,11 @@ export default {
     extend: {
       colors:{
         rule:{
-          'bg':'#edf2f1',
-          60:'#ffffff',
-          30:'#18111f',
-          10:'#98ff54'
+          'bg':'#ebfafa',
+          'text':'#7e7e7f',
+          60:'#2751db',
+          30:'#5ce0e0',
+          10:'#64f5f5'
         }
       }
     },
