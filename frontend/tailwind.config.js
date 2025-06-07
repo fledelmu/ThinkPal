@@ -14,7 +14,10 @@ export default {
           30:'#5ce0e0',
           10:'#64f5f5'
         }
-      }
+      },
+      fontFamily: {
+        'inter': ['Inter']
+      },
     },
   },
   plugins: [],
