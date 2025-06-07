@@ -180,7 +180,7 @@ const QuizList = () => {
 export default function Quiz() {
     return(
         <>
-            <div className='grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-64 text-left'>
+            <div className='grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-40 text-left'>
                 <SearchContainer/>
                 <QuizList/>
             </div>
