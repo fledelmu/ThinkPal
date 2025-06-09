@@ -104,7 +104,7 @@ const AddNoteOptions = ({ onExit }) => {
   )
 }
 
-// Modified to use onTextExtracted instead of onAddNote
+
 const AddPDFNote = ({ onExit, onTextExtracted }) => {
   const [pdfText, setPdfText] = useState("")
 
@@ -249,8 +249,8 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   }
 
   return (
-    <div className="fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center  z-50">
-      <div className="bg-rule-bg w-[85vw] h-[95vh] rounded-xl flex flex-col">
+    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-50">
+      <div className="bg-rule-bg w-[100vw] h-[95vh] rounded-xl flex flex-col">
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
             onClick={onExit}
@@ -327,7 +327,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
 
           {showPreview && (
             <div className="w-1/2 bg-rule-bg text-black p-4 overflow-auto">
-              <h2 className="text-lg font-semibold mb-2">Elaboration:</h2>
+              <h2 className="text-lg font-semibold mb-2">Key Points:</h2>
               <div
                 className="prose"
                 dangerouslySetInnerHTML={{ __html: elaboratedContent }}
@@ -432,7 +432,7 @@ const NotesList = () => {
 const Notes = () => {
   return (
     <>
-      <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-40 text-left">
+      <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left">
         <SearchContainer />
         <NotesList />
       </div>
