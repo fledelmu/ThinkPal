@@ -266,7 +266,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
               setIsElaborating(true);
               try {
                 const result = await elaborateNote(plainText); 
-                setElaboratedContent(result.elaborated_notes);
+                setElaboratedContent(result.expanded_notes);
                 setShowPreview(true);
               } catch (error) {
                 alert("Failed to elaborate notes.");
