@@ -322,6 +322,11 @@ const NotesList = () => {
   const [addNote, showAddNote] = useState(false)
   const [titles, setTitle] = useState([])
   const [selectedNote, setSelectedNote] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredTitles = titles.filter((title) =>
+    title.note_title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   // Displays the list
   const loadNotes = async () => {
@@ -357,6 +362,8 @@ const NotesList = () => {
             <input
               type="text"
               placeholder="Search Notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white"
             />
           </div>
@@ -368,26 +375,28 @@ const NotesList = () => {
         >
           <img src={add_icon || "/placeholder.svg"} alt="add icon" className="w-[20%] h-[20%] rounded-xl" />
         </button>
-        {titles.map((title) => (
-          <div
-            key={title.title_num}
-            className="relative group bg-rule-60 w-[175px] m-8 h-[200px] rounded-xl text-white overflow-hidden"
-          >
-            <img
-              src={notebook_image || "/placeholder.svg"}
-              alt="notebook image"
-              className="w-full h-full rounded-xl object-cover"
-            />
+          {filteredTitles.map((title) => (
+            <div
+              key={title.title_num}
+              className="relative group bg-rule-60 w-[175px] m-8 h-[200px] rounded-xl text-white overflow-hidden"
+            >
+              <img
+                src={notebook_image || "/placeholder.svg"}
+                alt="notebook image"
+                className="w-full h-full rounded-xl object-cover"
+              />
 
-            {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="mb-10">{title.note_title}</h3>
-              <button className="text-black bg-rule-10 px-3 m-5 py-1 rounded" onClick={() => openNote(title.title_num)}>
-                Open
-              </button>
+              <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <h3 className="mb-10">{title.note_title}</h3>
+                <button
+                  className="text-black bg-rule-10 px-3 m-5 py-1 rounded"
+                  onClick={() => openNote(title.title_num)}
+                >
+                  Open
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {modal && (
