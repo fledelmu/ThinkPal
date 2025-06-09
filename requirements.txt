@@ -10,3 +10,4 @@ pymysql==1.1.1
 python-dotenv==1.1.0
 google-generativeai==0.5.4
 requests
+groq
