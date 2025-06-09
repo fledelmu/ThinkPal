@@ -129,7 +129,19 @@ const getQuizzes = async () => {
     }
 };
 
-export { postNote, getSelectedNote, getNote, updateNote, deleteNote, // Note methods
+const elaborateNote = async (note) => {
+    try {
+        const response = await axios.post(`${URL}/gemini/elaborate_note`, {
+            note_content: note
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error elaborating text:', error);
+        throw error;
+    }
+};
+
+export { postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Note methods
         postTitle, updateTitle, getSelectedTitle, getTitle, // Title methods
         generateQuiz, getQuizzes// Quiz methods
 };

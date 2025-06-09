@@ -45,7 +45,7 @@ const Stats = () => {
 // main()   
 const Dashboard = () => {
     return (
-        <div className="grid grid-rows-[300px_1fr] text-black gap-4 w-[80vw] h-[95vh] mt-5 ml-64">
+        <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left">
             <Summary />
             <Stats/>
         </div>

@@ -88,7 +88,7 @@ const QuizCard = ({ quizData }) => {
 
 const QuizScreen = ({ quizData, onExit }) => {
     return (
-        <div className='fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center z-50'>
+        <div className='fixed top-0 left-[7rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center z-50'>
             <div className='bg-rule-bg border-2 border-rule-60 w-[85vw] h-[95vh] rounded-xl flex flex-col items-center'>
                 <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl w-full">
                     <button
@@ -141,7 +141,7 @@ const QuizList = () => {
 
     return (
         <>
-            <div className='bg-rule-bg grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-x-auto'>
+            <div className='bg-rule-bg grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-y-auto'>
                 {quizzes.map((quiz, index) => (
                     <div
                         key={quiz.quiz_num}
@@ -180,7 +180,7 @@ const QuizList = () => {
 export default function Quiz() {
     return(
         <>
-            <div className='grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-64 text-left'>
+            <div className='grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left'>
                 <SearchContainer/>
                 <QuizList/>
             </div>

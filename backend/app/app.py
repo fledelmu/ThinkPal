@@ -9,7 +9,6 @@ from werkzeug.utils import secure_filename
 import PyPDF2 
 import requests
 import os
-import torch
 import google.generativeai as genai
 import groq
 import traceback
@@ -56,15 +55,9 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
-# --- Question Generation Model ---
-try:
-    tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
-    model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
-    print("Local T5-base E2E QG model loaded successfully.")
-except Exception as e:
-    print(f"Error loading local T5-base E2E QG model: {e}")
-    tokenizer_qg = None
-    model_qg = None
+# Question Generation Model
+tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
+model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
 
 # --- Hugging Face API for Question Answering (QA) ---
 HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')

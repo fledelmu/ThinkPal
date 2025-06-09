@@ -1,5 +1,9 @@
 import notebook_image from "../assets/images/notebook_img.png"
 import add_icon from "../assets/icons/add_icon.png"
+import close_icon from "../assets/icons/close_icon.png"
+import save_icon from "../assets/icons/save_icon.png"
+import quiz_icon from "../assets/icons/quiz_add_icon.png"
+import elaborate_icon from "../assets/icons/elaborate_icon.png"
 import { useState, useRef, useEffect } from "react"
 import ReactQuill, { Quill } from "react-quill-new"
 import "react-quill-new/dist/quill.snow.css"
@@ -14,37 +18,11 @@ import {
   getSelectedTitle,
   updateTitle,
   generateQuiz,
+  elaborateNote
 } from "../utils/api.js"
 
 // Set the worker source for PDF.js - using a more reliable CDN path
 GlobalWorkerOptions.workerSrc = `/pdf.worker.mjs`;
-
-
-// Start of search components
-const SearchNotes = () => {
-  return (
-    <>
-      <div className="bg-rule-60 h-full w-full rounded-xl flex items-center justify-center">
-        <input
-          type="text"
-          placeholder="Search Notes..."
-          className="bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white"
-        />
-      </div>
-    </>
-  )
-}
-
-const SearchContainer = () => {
-  return (
-    <div className="flex flex-col h-[110px] w-full  ">
-      <h1 className="text-3xl font-bold m-4 text-rule-text">Notes</h1>
-      <SearchNotes />
-    </div>
-  )
-}
-// End of search components
-
 
 // Start of notes components
 const AddNoteOptions = ({ onExit }) => {
@@ -103,7 +81,7 @@ const AddNoteOptions = ({ onExit }) => {
   )
 }
 
-// Modified to use onTextExtracted instead of onAddNote
+
 const AddPDFNote = ({ onExit, onTextExtracted }) => {
   const [pdfText, setPdfText] = useState("")
 
@@ -166,8 +144,11 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const [value, setValue] = useState("")
   const [title, setTitle] = useState("")
   const [exists, checkExistance] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [elaboratedContent, setElaboratedContent] = useState("")
+  const [isElaborating, setIsElaborating] = useState(false)
   const quillRef = useRef(null)
-
+  
   const loadData = async () => {
     if (note) {
       setValue(note.notes)
@@ -238,33 +219,64 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       const key = note.title_num
       updateNote(key, finalContent)
       updateTitle(key, finalTitle)
-    } else {
+    } else {  
       postTitle(finalTitle)
       postNote(finalContent)
     }
   }
 
   return (
-    <div className="fixed top-0 left-[13.5rem] w-[calc(100vw-13.5rem)] h-screen flex items-center justify-center  z-50">
-      <div className="bg-rule-bg w-[85vw] h-[95vh] rounded-xl flex flex-col">
+    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-50">
+      <div className="bg-rule-bg w-[100vw] h-[95vh] rounded-xl flex flex-col">
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
             onClick={onExit}
-            className="bg-rule-10 h-[30px] w-[50px] ml-5 text-black flex items-center justify-center rounded-sm"
+            className=" h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm"
           >
-            Exit
+            <img src={close_icon}/>
           </button>
           <button
             onClick={handleSave}
-            className="bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center rounded-sm"
-          >
-            Save
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
+          > 
+            <img src={save_icon}/>
           </button>
           <button
             onClick={createQuiz}
-            className="bg-rule-10 h-[30px] w-[100px] text-black flex items-center justify-center rounded-sm"
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
           >
-            Generate Quiz
+            <img src={quiz_icon}/>
+          </button>
+          <button
+            onClick={async () => {
+              if (showPreview) {
+                setShowPreview(false);
+                setElaboratedContent("");
+                return;
+              }
+
+              const editor = quillRef.current?.getEditor();
+              const plainText = editor?.getText().trim();
+
+              if (!plainText) {
+                alert("Cannot elaborate empty notes.");
+                return;
+              }
+
+              setIsElaborating(true);
+              try {
+                const result = await elaborateNote(plainText); 
+                setElaboratedContent(result.elaborated_notes);
+                setShowPreview(true);
+              } catch (error) {
+                alert("Failed to elaborate notes.");
+              } finally {
+                setIsElaborating(false);
+              }
+            }}
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
+          >
+            <img src={elaborate_icon}/>
           </button>
         </div>
         <div className="bg-rule-bg border-l-2 border-r-2 border-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5">
@@ -276,16 +288,29 @@ const AddNote = ({ onExit, note = null, onSave }) => {
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
-        <div className="h-[92%] overflow-y-hidden border-l-2 border-r-2 border-b-2 border-rule-60 ">
-          <ReactQuill
-            ref={quillRef}
-            style={{ height: "100%" }}
-            theme="snow"
-            value={value}
-            onChange={setValue}
-            modules={modules}
-            placeholder="Start writing here..."
-          />
+        <div className="h-[92%] flex flex-row overflow-hidden border-l-2 border-r-2 border-b-2 border-rule-60">
+          {/* Quill Editor on the left */}
+          <div className={showPreview ? "w-1/2" : "w-full"}>
+            <ReactQuill
+              ref={quillRef}
+              style={{ height: "100%" }}
+              theme="snow"
+              value={value}
+              onChange={setValue}
+              modules={modules}
+              placeholder="Start writing here..."
+            />
+          </div>
+
+          {showPreview && (
+            <div className="w-1/2 bg-rule-bg text-black p-4 overflow-auto">
+              <h2 className="text-lg font-semibold mb-2">Key Points:</h2>
+              <div
+                className="prose"
+                dangerouslySetInnerHTML={{ __html: elaboratedContent }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -297,6 +322,11 @@ const NotesList = () => {
   const [addNote, showAddNote] = useState(false)
   const [titles, setTitle] = useState([])
   const [selectedNote, setSelectedNote] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredTitles = titles.filter((title) =>
+    title.note_title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   // Displays the list
   const loadNotes = async () => {
@@ -326,33 +356,47 @@ const NotesList = () => {
 
   return (
     <>
-      <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap">
+      <div className="flex flex-col h-[110px] w-full  ">
+        <h1 className="text-3xl font-bold m-4 text-rule-text">Notes</h1>
+          <div className="bg-rule-60 h-full w-full rounded-xl flex items-center justify-center">
+            <input
+              type="text"
+              placeholder="Search Notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white"
+            />
+          </div>
+      </div>
+      <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap overflow-y-auto">
         <button
           onClick={() => popUp(true)}
           className="bg-rule-60 h-[200px] w-[175px] m-8 rounded-xl text-rule-text flex items-center justify-center "
         >
           <img src={add_icon || "/placeholder.svg"} alt="add icon" className="w-[20%] h-[20%] rounded-xl" />
         </button>
-        {titles.map((title) => (
-          <div
-            key={title.title_num}
-            className="relative group bg-rule-60 w-[175px] m-8 h-[200px] rounded-xl text-white overflow-hidden"
-          >
-            <img
-              src={notebook_image || "/placeholder.svg"}
-              alt="notebook image"
-              className="w-full h-full rounded-xl object-cover"
-            />
+          {filteredTitles.map((title) => (
+            <div
+              key={title.title_num}
+              className="relative group bg-rule-60 w-[175px] m-8 h-[200px] rounded-xl text-white overflow-hidden"
+            >
+              <img
+                src={notebook_image || "/placeholder.svg"}
+                alt="notebook image"
+                className="w-full h-full rounded-xl object-cover"
+              />
 
-            {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <h3 className="mb-10">{title.note_title}</h3>
-              <button className="text-black bg-rule-10 px-3 m-5 py-1 rounded" onClick={() => openNote(title.title_num)}>
-                Open
-              </button>
+              <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <h3 className="mb-10">{title.note_title}</h3>
+                <button
+                  className="text-black bg-rule-10 px-3 m-5 py-1 rounded"
+                  onClick={() => openNote(title.title_num)}
+                >
+                  Open
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {modal && (
@@ -384,8 +428,7 @@ const NotesList = () => {
 const Notes = () => {
   return (
     <>
-      <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-64 text-left">
-        <SearchContainer />
+      <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left">
         <NotesList />
       </div>
     </>

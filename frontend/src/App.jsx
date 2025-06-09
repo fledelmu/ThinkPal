@@ -14,11 +14,11 @@ function App() {
     <> 
 
       <div className='flex bg-rule-bg w-screen h-screen'>
-        <Sidebar setActive={setActive} />
+        <Sidebar setActive={setActive} activeTab={activeTab} />
 
         <div>
-          {/*{activeTab === "Dashboard" && <Dashboard/>*/}
-          {activeTab === "Quizes" && <Quiz/>}
+          {activeTab === "Dashboard" && <Dashboard/>}
+          {activeTab === "Quizzes" && <Quiz/>}
           {/*{activeTab === "Routines" && <Routines/>}*/}
           {activeTab === "Notes" && <Notes/>}
         </div>
