@@ -17,7 +17,7 @@ function App() {
         <Sidebar setActive={setActive} activeTab={activeTab} />
 
         <div>
-          {/*{activeTab === "Dashboard" && <Dashboard/>*/}
+          {activeTab === "Dashboard" && <Dashboard/>}
           {activeTab === "Quizzes" && <Quiz/>}
           {/*{activeTab === "Routines" && <Routines/>}*/}
           {activeTab === "Notes" && <Notes/>}

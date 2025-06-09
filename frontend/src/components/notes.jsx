@@ -1,5 +1,9 @@
 import notebook_image from "../assets/images/notebook_img.png"
 import add_icon from "../assets/icons/add_icon.png"
+import close_icon from "../assets/icons/close_icon.png"
+import save_icon from "../assets/icons/save_icon.png"
+import quiz_icon from "../assets/icons/quiz_add_icon.png"
+import elaborate_icon from "../assets/icons/elaborate_icon.png"
 import { useState, useRef, useEffect } from "react"
 import ReactQuill, { Quill } from "react-quill-new"
 import "react-quill-new/dist/quill.snow.css"
@@ -19,33 +23,6 @@ import {
 
 // Set the worker source for PDF.js - using a more reliable CDN path
 GlobalWorkerOptions.workerSrc = `/pdf.worker.mjs`;
-
-
-// Start of search components
-const SearchNotes = () => {
-  return (
-    <>
-      <div className="bg-rule-60 h-full w-full rounded-xl flex items-center justify-center">
-        <input
-          type="text"
-          placeholder="Search Notes..."
-          className="bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white"
-        />
-      </div>
-    </>
-  )
-}
-
-const SearchContainer = () => {
-  return (
-    <div className="flex flex-col h-[110px] w-full  ">
-      <h1 className="text-3xl font-bold m-4 text-rule-text">Notes</h1>
-      <SearchNotes />
-    </div>
-  )
-}
-// End of search components
-
 
 // Start of notes components
 const AddNoteOptions = ({ onExit }) => {
@@ -171,7 +148,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const [elaboratedContent, setElaboratedContent] = useState("")
   const [isElaborating, setIsElaborating] = useState(false)
   const quillRef = useRef(null)
-
+  
   const loadData = async () => {
     if (note) {
       setValue(note.notes)
@@ -254,21 +231,21 @@ const AddNote = ({ onExit, note = null, onSave }) => {
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
             onClick={onExit}
-            className="bg-rule-10 h-[30px] w-[50px] ml-5 text-black flex items-center justify-center rounded-sm"
+            className=" h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm"
           >
-            Exit
+            <img src={close_icon}/>
           </button>
           <button
             onClick={handleSave}
-            className="bg-rule-10 h-[30px] w-[50px] text-black flex items-center justify-center rounded-sm"
-          >
-            Save
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
+          > 
+            <img src={save_icon}/>
           </button>
           <button
             onClick={createQuiz}
-            className="bg-rule-10 h-[30px] w-[100px] text-black flex items-center justify-center rounded-sm"
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
           >
-            Generate Quiz
+            <img src={quiz_icon}/>
           </button>
           <button
             onClick={async () => {
@@ -297,9 +274,9 @@ const AddNote = ({ onExit, note = null, onSave }) => {
                 setIsElaborating(false);
               }
             }}
-            className="bg-rule-10 h-[30px] w-[100px] text-black flex items-center justify-center rounded-sm"
+            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
           >
-            {isElaborating ? "Loading..." : showPreview ? "Hide Preview" : "Elaborate"}
+            <img src={elaborate_icon}/>
           </button>
         </div>
         <div className="bg-rule-bg border-l-2 border-r-2 border-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5">
@@ -374,6 +351,16 @@ const NotesList = () => {
 
   return (
     <>
+      <div className="flex flex-col h-[110px] w-full  ">
+        <h1 className="text-3xl font-bold m-4 text-rule-text">Notes</h1>
+          <div className="bg-rule-60 h-full w-full rounded-xl flex items-center justify-center">
+            <input
+              type="text"
+              placeholder="Search Notes..."
+              className="bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white"
+            />
+          </div>
+      </div>
       <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap overflow-y-auto">
         <button
           onClick={() => popUp(true)}
@@ -433,7 +420,6 @@ const Notes = () => {
   return (
     <>
       <div className="grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left">
-        <SearchContainer />
         <NotesList />
       </div>
     </>
