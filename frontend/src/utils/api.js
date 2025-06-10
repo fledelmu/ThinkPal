@@ -141,7 +141,18 @@ const elaborateNote = async (note) => {
     }
 };
 
+const getRecents = async () => {
+    try {
+        const response = await axios.get(`${URL}/titles/sorted`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching recents:', error);
+        throw error;
+    }
+}
+
 export { postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Note methods
         postTitle, updateTitle, getSelectedTitle, getTitle, // Title methods
-        generateQuiz, getQuizzes// Quiz methods
+        generateQuiz, getQuizzes, // Quiz methods
+        getRecents //Dashboard
 };
