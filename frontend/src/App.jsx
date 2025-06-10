@@ -9,7 +9,7 @@ import { useState } from 'react'
 
 function App() {
   //const [activeTab, setActive] = useState("Dashboard") default
-  const [activeTab, setActive] = useState("Notes")
+  const [activeTab, setActive] = useState("Dashboard")
   return (
     <> 
 

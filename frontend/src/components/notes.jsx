@@ -9,6 +9,8 @@ import ReactQuill, { Quill } from "react-quill-new"
 import "react-quill-new/dist/quill.snow.css"
 import { useDropzone } from "react-dropzone"
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
+import dayjs from "dayjs"
+
 import {
   postNote,
   getSelectedNote,
@@ -23,6 +25,7 @@ import {
 
 // Set the worker source for PDF.js - using a more reliable CDN path
 GlobalWorkerOptions.workerSrc = `/pdf.worker.mjs`;
+const nowSQL = dayjs().format("YYYY-MM-DD HH:mm:ss")
 
 // Start of notes components
 const AddNoteOptions = ({ onExit }) => {
@@ -356,7 +359,7 @@ const NotesList = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[110px] w-full  ">
+      <div className="flex flex-col h-[110px] w-full ">
         <h1 className="text-3xl font-bold m-4 text-rule-text">Notes</h1>
           <div className="bg-rule-60 h-full w-full rounded-xl flex items-center justify-center">
             <input
@@ -368,7 +371,7 @@ const NotesList = () => {
             />
           </div>
       </div>
-      <div className="bg-rule-bg grid grid-cols-5  justify-start h-full w-full rounded-xl flex-wrap overflow-y-auto">
+      <div className="bg-rule-bg grid grid-cols-5 border-2 border-rule-60  justify-start h-full w-full rounded-xl flex-wrap overflow-y-auto">
         <button
           onClick={() => popUp(true)}
           className="bg-rule-60 h-[200px] w-[175px] m-8 rounded-xl text-rule-text flex items-center justify-center "

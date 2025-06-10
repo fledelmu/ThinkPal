@@ -2,24 +2,12 @@ import quiz_img from '../assets/images/quiz_img.png';
 import { useEffect, useState } from 'react';
 import { getQuizzes, getTitle } from '../utils/api';
 
-const SearchNotes = () => {
-    return(
-        <>  
-            <div className='bg-rule-60 h-full w-full rounded-xl flex items-center justify-center'>
-                <input type='text' 
-                placeholder='Search Quiz...' 
-                className='bg-rule-60 h-[50px] w-full rounded-xl p-4 text-white'/>
-            </div>
-            
-        </>
-    )
-}
+
 
 const SearchContainer = () => {
     return(
         <div className='flex flex-col h-[110px] w-full'>
             <h1 className='text-3xl font-bold m-4 text-rule-text'>Quizzes</h1>
-            <SearchNotes/>
         </div>
     )
 }
@@ -67,7 +55,7 @@ const QuizCard = ({ quizData }) => {
                 </h3>
             </div>
 
-            <div className='bg-rule-60 w-[65%] border-2 h-[5%] m-2 rounded-xl text-white flex flex-row items-center'>
+            <div className='bg-rule-60 w-[65%] border-2 h-[5%] m-2 rounded-xl  text-white flex flex-row items-center'>
                 <input
                     type='text'
                     placeholder='Answer here...'
@@ -141,7 +129,7 @@ const QuizList = () => {
 
     return (
         <>
-            <div className='bg-rule-bg grid grid-cols-5 justify-start h-full w-full rounded-xl overflow-y-auto'>
+            <div className='bg-rule-bg grid grid-cols-5 justify-start border-2 border-rule-60 h-full w-full rounded-xl overflow-y-auto'>
                 {quizzes.map((quiz, index) => (
                     <div
                         key={quiz.quiz_num}
@@ -180,7 +168,7 @@ const QuizList = () => {
 export default function Quiz() {
     return(
         <>
-            <div className='grid grid-rows-[120px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left'>
+            <div className='grid grid-rows-[60px_1fr] gap-2 w-[80vw] h-[95vh] mt-5 ml-32 text-left'>
                 <SearchContainer/>
                 <QuizList/>
             </div>
