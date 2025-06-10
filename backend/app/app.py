@@ -12,6 +12,8 @@ import os
 import google.generativeai as genai
 import groq
 import traceback
+from datetime import datetime
+
 load_dotenv()
 
 
@@ -39,6 +41,7 @@ class Title(db.Model):
     __tablename__ = 'tbl_titles'
     title_num = db.Column(db.Integer, primary_key=True)
     note_title = db.Column(db.String(255), nullable=False)
+    date_accessed = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     notes = db.relationship('Note', backref='title', lazy=True, cascade="all, delete")
 
 class Note(db.Model):
@@ -250,6 +253,7 @@ def gemini_elaborate_note():
         Each bullet point should represent a key piece of information.
 
         **Return the response as raw HTML**, using appropriate HTML tags like `<ul>`, `<li>`, `<strong>`. For any new lines or breaks *within* a bullet point's text content, use `<br>` tags explicitly.
+        *Do not wrap the HTML in markdown code blocks. Format new lines properly too.*
 
         Study Notes:
         {note_content}
@@ -316,6 +320,7 @@ def gemini_elaborate_note():
             Present these essential key points as a bulleted list.
 
             Return the response as raw HTML, using appropriate HTML tags like `<ul>`, `<li>`, `<strong>`. For any new lines or breaks *within* a bullet point's text content, use `<br>` tags explicitly.
+            *Do not wrap the HTML in markdown code blocks. Format new lines properly too.*
 
             Study Notes:
             {note_content}
@@ -346,6 +351,17 @@ def get_titles():
     titles = Title.query.all()
     return jsonify([{'title_num': t.title_num, 'note_title': t.note_title} for t in titles])
 
+@app.route('/titles/sorted', methods=['GET'])
+def get_titles_sorted():
+    titles = Title.query.order_by(Title.date_accessed.desc()).all()
+    return jsonify([
+        {
+            'title_num': t.title_num,
+            'note_title': t.note_title,
+            'date_accessed': t.date_accessed
+        } for t in titles
+    ])
+
 @app.route('/titles/<int:title_num>', methods=['GET'])
 def get_selected_titles(title_num):
     title = Title.query.filter_by(title_num=title_num).first()
@@ -366,8 +382,9 @@ def update_title(title_num):
     data = request.get_json()
     title = Title.query.get_or_404(title_num)
     title.note_title = data['note_title']
+    title.date_accessed = datetime.now()
     db.session.commit()
-    return jsonify({'title_num': title.title_num, 'note_title': title.note_title})
+    return jsonify({'title_num': title.title_num, 'note_title': title.note_title, 'date_accessed': title.date_accessed})
 
 @app.route('/titles/<int:title_num>', methods=['DELETE'])
 def delete_title(title_num):
