@@ -3,17 +3,29 @@ import quiz_icon from "../assets/icons/quiz_icon_large.png"
 import notebook_image from "../assets/images/notebook_img.png"
 import { getRecents } from "../utils/api";
 import { useState, useEffect } from 'react';
+import { AddNoteOptions } from "./notes.jsx"
 
 // Dashboard Component and related code
 const ShortcutsContainer = () => {
+    const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+    const navigateToQuiz = () => {
+        // Instead of changing the hash, use the setActive prop from Sidebar
+        // We'll dispatch a custom event to communicate with App
+        window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'Quizzes' }));
+    };
     return(
         <div className='bg-rule-bg h-full w-full flex flex-row items-center justify-start space-x-10 '>
-            <button className='bg-rule-60 w-[15%] h-full flex items-center justify-center rounded-xl text-white'>
+            <button className='bg-rule-60 w-[15%] h-full flex items-center justify-center rounded-xl text-white'
+                onClick={() => setShowAddNoteModal(true)}>
                 <img src={add_note_icon}/>
             </button>
-            <button className='bg-rule-60 w-[15%] h-full flex items-center justify-center rounded-xl text-white'>
+            <button className='bg-rule-60 w-[15%] h-full flex items-center justify-center rounded-xl text-white'
+                onClick={navigateToQuiz}>
                 <img src={quiz_icon}/>
             </button>
+            {showAddNoteModal && (
+                <AddNoteOptions onExit={() => setShowAddNoteModal(false)} />
+            )}
         </div>
     )
 }

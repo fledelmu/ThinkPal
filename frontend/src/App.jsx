@@ -5,11 +5,21 @@ import Quiz from './components/quiz'
 import Routines from './components/routines'
 import { Notes } from './components/notes'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function App() {
-  //const [activeTab, setActive] = useState("Dashboard") default
   const [activeTab, setActive] = useState("Dashboard")
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.type === 'navigateToTab' && e.detail) {
+        setActive(e.detail);
+      }
+    };
+    window.addEventListener('navigateToTab', handler);
+    return () => window.removeEventListener('navigateToTab', handler);
+  }, []);
+
   return (
     <> 
 
