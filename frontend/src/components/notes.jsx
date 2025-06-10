@@ -438,4 +438,4 @@ const Notes = () => {
   )
 }
 
-export { Notes }
+export { AddNoteOptions, Notes }
