@@ -233,7 +233,15 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       <div className="bg-rule-bg w-[100vw] h-[95vh] rounded-xl flex flex-col">
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
-            onClick={onExit}
+            onClick={async () => {
+            try {
+              await handleSave();
+            } catch (error) {
+              console.error('Error saving note:', error);
+            } finally {
+              onExit();
+            }
+          }}
             className=" h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm"
           >
             <img src={close_icon}/>
@@ -438,4 +446,4 @@ const Notes = () => {
   )
 }
 
-export { AddNoteOptions, Notes }
+export { AddNoteOptions, Notes, AddNote }

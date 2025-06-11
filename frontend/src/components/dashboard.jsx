@@ -1,9 +1,9 @@
 import add_note_icon from "../assets/icons/dashboard_add_note_icon.png"
 import quiz_icon from "../assets/icons/quiz_icon_large.png"
 import notebook_image from "../assets/images/notebook_img.png"
-import { getRecents } from "../utils/api";
+import { getRecents, getSelectedNote } from "../utils/api";
 import { useState, useEffect } from 'react';
-import { AddNoteOptions } from "./notes.jsx"
+import { AddNoteOptions, AddNote } from "./notes.jsx"
 
 // Dashboard Component and related code
 const ShortcutsContainer = () => {
@@ -52,17 +52,30 @@ const Shortcuts = () => {
 
 const Recents = () => {
     const [recents, setRecents] = useState([]);
+    const [addNote, showAddNote] = useState(false);
+    const [selectedNote, setSelectedNote] = useState(null);
+
+    const openNote = async (key) => {
+        try {
+            const existingNote = await getSelectedNote(key);
+            console.log(existingNote);
+            setSelectedNote(existingNote);
+            showAddNote(true);
+        } catch (error) {
+            console.error("Error fetching note:", error);
+        }
+    };
+
+    const fetchRecents = async () => {
+        try {
+            const data = await getRecents();
+            setRecents(data);
+        } catch (error) {
+            console.error("Failed to fetch recents:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchRecents = async () => {
-            try {
-                const data = await getRecents();
-                setRecents(data);
-            } catch (error) {
-                console.error("Failed to fetch recents:", error);
-            }
-        };
-
         fetchRecents();
     }, []);
 
@@ -79,7 +92,7 @@ const Recents = () => {
                             className="relative group bg-rule-60 w-[175px] m-4 h-[200px] rounded-xl text-white overflow-hidden"
                         >
                             <img
-                                src={notebook_image}
+                                src={notebook_image || "/placeholder.svg"}
                                 alt="notebook"
                                 className="w-full h-full rounded-xl object-cover"
                             />
@@ -87,7 +100,7 @@ const Recents = () => {
                                 <h3 className="mb-10">{title.note_title}</h3>
                                 <button
                                     className="text-black bg-rule-10 px-3 m-5 py-1 rounded"
-                                    onClick={() => {/* openNote(title.title_num) */}}
+                                    onClick={() => openNote(title.title_num)}
                                 >
                                     Open
                                 </button>
@@ -96,6 +109,17 @@ const Recents = () => {
                     ))
                 )}
             </div>
+
+            {addNote && (
+                <AddNote
+                    note={selectedNote}
+                    onExit={() => {
+                        showAddNote(false);
+                        setSelectedNote(null);
+                        fetchRecents(); // Refresh the recents list after closing the note
+                    }}
+                />
+            )}
         </div>
     );
 };
