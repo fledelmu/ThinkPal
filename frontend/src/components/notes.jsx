@@ -1,15 +1,20 @@
 import notebook_image from "../assets/images/notebook_img.png"
 import add_icon from "../assets/icons/add_icon.png"
 import close_icon from "../assets/icons/close_icon.png"
+import close_icon_hover from "../assets/icons/close_icon_hovered.png"
 import save_icon from "../assets/icons/save_icon.png"
+import save_icon_hover from "../assets/icons/save_hovered.png"
 import quiz_icon from "../assets/icons/quiz_add_icon.png"
+import quiz_icon_hover from "../assets/icons/quiz_add_hovered.png"
 import elaborate_icon from "../assets/icons/elaborate_icon.png"
+import elaborate_hovered from "../assets/icons/elaborate_hovered.png"
 import { useState, useRef, useEffect } from "react"
 import ReactQuill, { Quill } from "react-quill-new"
 import "react-quill-new/dist/quill.snow.css"
 import { useDropzone } from "react-dropzone"
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import dayjs from "dayjs"
+import { useLoading } from "../components/LoadingContext"
 
 import {
   postNote,
@@ -150,6 +155,8 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const [showPreview, setShowPreview] = useState(false)
   const [elaboratedContent, setElaboratedContent] = useState("")
   const [isElaborating, setIsElaborating] = useState(false)
+  const [hasSaved, setHasSaved] = useState(false)
+  const { setLoading, setLoadingMessage } = useLoading()
   const quillRef = useRef(null)
   
   const loadData = async () => {
@@ -190,46 +197,65 @@ const AddNote = ({ onExit, note = null, onSave }) => {
     ],
   }
   const createQuiz = async () => {
-    const editor = quillRef.current.getEditor()
-    const plain_text = editor.getText().trim()
+    const editor = quillRef.current.getEditor();
+    const plain_text = editor.getText().trim();
 
-    if (!plain_text || plain_text === "") {
-      alert("Cannot generate quiz from empty content.")
-      return
+    if (!plain_text) {
+      alert("Cannot generate quiz from empty content.");
+      return;
     }
 
-    const noteKey = exists ? note.title_num : null
+    const noteKey = exists ? note.title_num : null;
     if (!noteKey) {
-      alert("Please save the note first before generating a quiz.")
-      return
+      alert("Please save the note first before generating a quiz.");
+      return;
     }
 
-    generateQuiz(noteKey, plain_text)
-  }
+    try {
+      setLoading(true);
+      setLoadingMessage("Generating quiz...");
+
+      await generateQuiz(noteKey, plain_text);
+
+      setLoadingMessage("Quiz successfully generated!"); // ✔️ Update message
+      setTimeout(() => setLoading(false), 1500);          // ⏳ Hide after 1.5s
+    } catch (error) {
+      setLoadingMessage("Failed to generate quiz.");
+      setTimeout(() => setLoading(false), 1500);
+    }
+  };
+
   // Extract text from the Quill editor
   const handleSave = async () => {
-    const editor = quillRef.current.getEditor()
-    const plain_text = editor.getText().trim()
-    const html = editor.root.innerHTML.trim()
+    if (hasSaved) return; // Prevent duplicate save
+    setHasSaved(true); // Mark as saved
 
-    const defaultTitle = "Untitled Note"
-    const defaultContent = "<p><em>No content provided.</em></p>"
+    const editor = quillRef.current.getEditor();
+    const plain_text = editor.getText().trim();
+    const html = editor.root.innerHTML.trim();
 
-    const finalTitle = title.trim() === "" ? defaultTitle : title.trim()
-    const finalContent = plain_text === "" || html === "<p><br></p>" ? defaultContent : html
+    const defaultTitle = "Untitled Note";
+    const defaultContent = "<p><em>No content provided.</em></p>";
 
-    if (exists) {
-      const key = note.title_num
-      updateNote(key, finalContent)
-      updateTitle(key, finalTitle)
-    } else {  
-      postTitle(finalTitle)
-      postNote(finalContent)
+    const finalTitle = title.trim() === "" ? defaultTitle : title.trim();
+    const finalContent = plain_text === "" || html === "<p><br></p>" ? defaultContent : html;
+
+    try {
+      if (exists) {
+        const key = note.title_num;
+        await updateNote(key, finalContent);
+        await updateTitle(key, finalTitle);
+      } else {
+        const { title_num: newTitleNum } = await postTitle(finalTitle);
+        await postNote(finalContent, newTitleNum);
+      }
+    } finally {
+      setTimeout(() => setHasSaved(false), 500); // Optionally allow re-saving later
     }
-  }
+  };
 
   return (
-    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-50">
+    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-40">
       <div className="bg-rule-bg w-[100vw] h-[95vh] rounded-xl flex flex-col">
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
@@ -242,21 +268,55 @@ const AddNote = ({ onExit, note = null, onSave }) => {
               onExit();
             }
           }}
-            className=" h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm"
+            className=" group relative h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
-            <img src={close_icon}/>
+            <img
+              src={close_icon}
+              className="group-hover:hidden"
+              alt="Close icon light"
+            />
+            <img
+              src={close_icon_hover}
+              className="hidden group-hover:block"
+              alt="Close icon dark"
+            />
+            
           </button>
           <button
             onClick={handleSave}
-            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
-          > 
-            <img src={save_icon}/>
+            className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
+          >
+            <img
+              src={save_icon}
+              className="group-hover:hidden"
+              alt="Save icon light"
+            />
+            <img
+              src={save_icon_hover}
+              className="hidden group-hover:block"
+              alt="Save icon dark"
+            />
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Save
+            </span>
           </button>
           <button
             onClick={createQuiz}
-            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
+            className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
-            <img src={quiz_icon}/>
+            <img
+              src={quiz_icon}
+              className="group-hover:hidden"
+              alt="Quiz icon light"
+            />
+            <img
+              src={quiz_icon_hover}
+              className="hidden group-hover:block"
+              alt="Quiz icon dark"
+            />
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Generate Quiz
+            </span>
           </button>
           <button
             onClick={async () => {
@@ -285,9 +345,21 @@ const AddNote = ({ onExit, note = null, onSave }) => {
                 setIsElaborating(false);
               }
             }}
-            className="h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm"
+            className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
-            <img src={elaborate_icon}/>
+            <img
+              src={elaborate_icon}
+              className="group-hover:hidden"
+              alt="Elaborate icon light"
+            />
+            <img
+              src={elaborate_hovered}
+              className="hidden group-hover:block"
+              alt="Elaborate icon dark"
+            />
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Key Points
+            </span>
           </button>
         </div>
         <div className="bg-rule-bg border-l-2 border-r-2 border-rule-60 w-full h-[5%] flex flex-row items-center justify-start gap-5">
