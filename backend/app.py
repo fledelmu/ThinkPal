@@ -34,10 +34,7 @@ def test_db_connection():
         print('Database connection successful!')
     except Exception as e:
         print(f'Database connection failed: {e}')
-# Test DB connection at startup with app context
-with app.app_context():
 
-    test_db_connection()
 
 class Title(db.Model):
     __tablename__ = 'tbl_titles'
@@ -61,7 +58,10 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
-db.create_all()
+# Test DB connection at startup with app context
+with app.app_context():
+    db.create_all()
+    test_db_connection()
 
 # Initialize Gemini Pro model if API key is set
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
