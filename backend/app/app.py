@@ -44,14 +44,14 @@ class Title(db.Model):
     title_num = db.Column(db.Integer, primary_key=True)
     note_title = db.Column(db.String(255), nullable=False)
     date_accessed = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    notes = db.relationship('Note', backref='title', lazy=True, cascade="all, delete")
+    notes = db.relationship('Note', backref='title', lazy=True, cascade="all, delete", passive_deletes=True)
 
 class Note(db.Model):
     __tablename__ = 'tbl_note'
     note_num = db.Column(db.Integer, primary_key=True)
     title_num = db.Column(db.Integer, db.ForeignKey('tbl_titles.title_num', ondelete="CASCADE"), nullable=False)
     notes = db.Column(db.Text, nullable=False)
-    quizzes = db.relationship('Quiz', backref='note', lazy=True, cascade="all, delete")
+    quizzes = db.relationship('Quiz', backref='note', lazy=True, cascade="all, delete", passive_deletes=True)
 
 class Quiz(db.Model):
     __tablename__ = 'tbl_quiz'
