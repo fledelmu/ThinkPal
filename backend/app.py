@@ -34,10 +34,9 @@ def test_db_connection():
         print('Database connection successful!')
     except Exception as e:
         print(f'Database connection failed: {e}')
-
 # Test DB connection at startup with app context
 with app.app_context():
-    db.create_all()
+
     test_db_connection()
 
 class Title(db.Model):
@@ -62,28 +61,7 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
-# --- Hugging Face API for Question Answering (QA) ---
-HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
-
-if not HUGGINGFACE_API_KEY:
-    print("WARNING: HUGGINGFACE_API_KEY not found in environment variables. Hugging Face QA API features might be unavailable.")
-
-QA_API_URL = "https://api-inference.huggingface.co/models/google-bert/bert-large-uncased-whole-word-masking-finetuned-squad"
-HEADERS = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-
-
-# Helper function to make requests to the Hugging Face Inference API
-def query_hf_api(api_url, payload):
-    if not HUGGINGFACE_API_KEY:
-        print("Error: Hugging Face API token is not set. Cannot make API call for QA.")
-        return None
-    try:
-        response = requests.post(api_url, headers=HEADERS, json=payload)
-        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling Hugging Face API at {api_url}: {e}")
-        return None
+db.create_all()
 
 # Initialize Gemini Pro model if API key is set
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
