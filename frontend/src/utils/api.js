@@ -96,6 +96,18 @@ const getTitle = async () => {
     }
 };
 
+const getTitleNum = async (title) => {
+  try {
+    const response = await axios.get(`${URL}/titles/get-num`, {
+      params: { title }
+    });
+    return response.data.title_num; 
+  } catch (error) {
+    console.error('Error fetching title number:', error);
+    throw error;
+  }
+};
+
 const getSelectedTitle = async (title_num) => {
     try{
         const response = await axios.get(`${URL}/titles/${title_num}`);
@@ -106,10 +118,21 @@ const getSelectedTitle = async (title_num) => {
     }
 };
 
-const generateQuiz = async (title_num, text) => {
+const deleteTitle = async (title_num) => {
+    try {
+        const response = await axios.delete(`${URL}/titles/${title_num}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting title:', error);
+        throw error;   
+    }
+}
+
+const generateQuiz = async (title_num, title, text) => {
     try {
         const response = await axios.post(`${URL}/generate_quiz`, {
             title_num: title_num,
+            quiz_title: title,
             plain_text: text
         });
         return response.data;
@@ -152,7 +175,7 @@ const getRecents = async () => {
 }
 
 export { postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Note methods
-        postTitle, updateTitle, getSelectedTitle, getTitle, // Title methods
+        postTitle, updateTitle, getSelectedTitle, getTitle, getTitleNum, deleteTitle, // Title methods
         generateQuiz, getQuizzes, // Quiz methods
         getRecents //Dashboard
 };
