@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -10,7 +10,7 @@ import re
 import PyPDF2 
 import requests
 import os
-import torch
+
 import google.generativeai as genai
 import groq
 import traceback
