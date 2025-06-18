@@ -442,6 +442,8 @@ def get_quizzes():
         {'quiz_num': q.quiz_num, 'note_num': q.note_num, 'quiz_title': q.quiz_title, 'question': q.question, 'answer': q.answer} for q in quizzes
     ])
 
+"""
 if __name__ == '__main__':
     print("Starting Flask server...")
     app.run(debug=True, host='0.0.0.0', port=5000)
+"""
