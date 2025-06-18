@@ -37,6 +37,7 @@ def test_db_connection():
 
 # Test DB connection at startup with app context
 with app.app_context():
+    db.create_all()
     test_db_connection()
 
 class Title(db.Model):
