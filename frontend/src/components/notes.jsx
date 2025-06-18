@@ -24,8 +24,11 @@ import {
   getTitle,
   getSelectedTitle,
   updateTitle,
+  getTitleNum,
   generateQuiz,
-  elaborateNote
+  elaborateNote,
+  deleteNote,
+  deleteTitle
 } from "../utils/api.js"
 
 // Set the worker source for PDF.js - using a more reliable CDN path
@@ -156,9 +159,12 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   const [elaboratedContent, setElaboratedContent] = useState("")
   const [isElaborating, setIsElaborating] = useState(false)
   const [hasSaved, setHasSaved] = useState(false)
+  const [titleNum, setTitleNum] = useState(note?.title_num || null)
+  const [hasChanged, setHasChanged] = useState(false)
+
   const { setLoading, setLoadingMessage } = useLoading()
   const quillRef = useRef(null)
-  
+
   const loadData = async () => {
     if (note) {
       setValue(note.notes)
@@ -166,6 +172,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
         const title = await getSelectedTitle(note.title_num)
         checkExistance(true)
         setTitle(title.note_title)
+        setTitleNum(note.title_num)
       }
     }
   }
@@ -196,107 +203,143 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       ["clean"],
     ],
   }
-  const createQuiz = async () => {
-    const editor = quillRef.current.getEditor();
-    const plain_text = editor.getText().trim();
 
+  const createQuiz = async () => {
+    const editor = quillRef.current.getEditor()
+    const plain_text = editor.getText().trim()
+    const quizTitle = title + " Quiz"
+    
     if (!plain_text) {
-      alert("Cannot generate quiz from empty content.");
-      return;
+      alert("Cannot generate quiz from empty content.")
+      return
     }
 
-    const noteKey = exists ? note.title_num : null;
+    let noteKey = titleNum
+
+    // Save the note if it's not yet saved
     if (!noteKey) {
-      alert("Please save the note first before generating a quiz.");
-      return;
+      console.log("No titleNum found, attempting to save note first...")
+      try {
+        noteKey = await handleSave()
+        console.log("handleSave returned:", noteKey)
+
+        if (!noteKey) {
+          alert("Failed to save the note. Cannot generate quiz.")
+          return
+        }
+
+        // Update the titleNum state with the new key
+        setTitleNum(noteKey)
+        console.log("Updated titleNum state to:", noteKey)
+      } catch (error) {
+        console.error("Error saving note:", error)
+        alert("Failed to save the note. Cannot generate quiz.")
+        return
+      }
     }
 
     try {
-      setLoading(true);
-      setLoadingMessage("Generating quiz...");
+      setLoading(true)
+      setLoadingMessage("Generating quiz...")
+      console.log("Generating quiz with noteKey:", noteKey)
 
-      await generateQuiz(noteKey, plain_text);
+      await generateQuiz(noteKey, quizTitle, plain_text)
 
-      setLoadingMessage("Quiz successfully generated!"); // ✔️ Update message
-      setTimeout(() => setLoading(false), 1500);          // ⏳ Hide after 1.5s
+      setLoadingMessage("Quiz successfully generated!")
+      setTimeout(() => setLoading(false), 1500)
     } catch (error) {
-      setLoadingMessage("Failed to generate quiz.");
-      setTimeout(() => setLoading(false), 1500);
+      console.error("Quiz generation error:", error)
+      setLoadingMessage("Failed to generate quiz.")
+      setTimeout(() => setLoading(false), 1500)
     }
-  };
+  }
 
   // Extract text from the Quill editor
   const handleSave = async () => {
-    if (hasSaved) return; // Prevent duplicate save
-    setHasSaved(true); // Mark as saved
+    if (!hasChanged) {
+      console.log("No changes detected, returning existing titleNum:", titleNum)
+      return titleNum
+    }
 
-    const editor = quillRef.current.getEditor();
-    const plain_text = editor.getText().trim();
-    const html = editor.root.innerHTML.trim();
+    setHasSaved(true)
+    setHasChanged(false)
 
-    const defaultTitle = "Untitled Note";
-    const defaultContent = "<p><em>No content provided.</em></p>";
+    const editor = quillRef.current.getEditor()
+    const plain_text = editor.getText().trim()
+    const html = editor.root.innerHTML.trim()
 
-    const finalTitle = title.trim() === "" ? defaultTitle : title.trim();
-    const finalContent = plain_text === "" || html === "<p><br></p>" ? defaultContent : html;
+    const defaultTitle = "Untitled Note"
+    const defaultContent = "<p><em>No content provided.</em></p>"
+
+    const finalTitle = title.trim() === "" ? defaultTitle : title.trim()
+    const finalContent = plain_text === "" || html === "<p><br></p>" ? defaultContent : html
 
     try {
       if (exists) {
-        const key = note.title_num;
-        await updateNote(key, finalContent);
-        await updateTitle(key, finalTitle);
+        console.log("Updating existing note with titleNum:", note.title_num)
+        const key = note.title_num
+        await updateNote(key, finalContent)
+        await updateTitle(key, finalTitle)
+        return key
       } else {
-        const { title_num: newTitleNum } = await postTitle(finalTitle);
-        await postNote(finalContent, newTitleNum);
+        console.log("Creating new note with title:", finalTitle)
+        await postTitle(finalTitle)
+        await postNote(finalContent, finalTitle)
+
+        console.log("Fetching title_num using getTitleNum...")
+        const newTitleNum = await getTitleNum(finalTitle)
+        if (!newTitleNum) {
+          throw new Error("Failed to retrieve title_num from getTitleNum")
+        }
+
+        checkExistance(true)
+        setTitleNum(newTitleNum)
+
+        return newTitleNum
       }
+    } catch (error) {
+      console.error("Error in handleSave:", error)
+      throw error
     } finally {
-      setTimeout(() => setHasSaved(false), 500); // Optionally allow re-saving later
+      setTimeout(() => setHasSaved(false), 500)
     }
-  };
+  }
+
 
   return (
-    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-40">
+    <div className="fixed top-0 left-24 w-[calc(100vw-12rem)] h-screen flex items-center justify-center  z-30">
       <div className="bg-rule-bg w-[100vw] h-[95vh] rounded-xl flex flex-col">
         <div className="bg-rule-60 flex items-center h-[7%] rounded-tl-xl rounded-tr-xl gap-2 w-full">
           <button
             onClick={async () => {
-            try {
-              await handleSave();
-            } catch (error) {
-              console.error('Error saving note:', error);
-            } finally {
-              onExit();
-            }
-          }}
+              try {
+                await handleSave()
+              } catch (error) {
+                console.error("Error saving note:", error)
+              } finally {
+                onExit()
+              }
+            }}
             className=" group relative h-[30px] w-[30px] ml-5 text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
+            <img src={close_icon || "/placeholder.svg"} className="group-hover:hidden" alt="Close icon light" />
             <img
-              src={close_icon}
-              className="group-hover:hidden"
-              alt="Close icon light"
-            />
-            <img
-              src={close_icon_hover}
+              src={close_icon_hover || "/placeholder.svg"}
               className="hidden group-hover:block"
               alt="Close icon dark"
             />
-            
           </button>
           <button
             onClick={handleSave}
             className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
+            <img src={save_icon || "/placeholder.svg"} className="group-hover:hidden" alt="Save icon light" />
             <img
-              src={save_icon}
-              className="group-hover:hidden"
-              alt="Save icon light"
-            />
-            <img
-              src={save_icon_hover}
+              src={save_icon_hover || "/placeholder.svg"}
               className="hidden group-hover:block"
               alt="Save icon dark"
             />
-            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-60 bg-rule-bg border-2 border-rule-60 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               Save
             </span>
           </button>
@@ -304,60 +347,52 @@ const AddNote = ({ onExit, note = null, onSave }) => {
             onClick={createQuiz}
             className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
+            <img src={quiz_icon || "/placeholder.svg"} className="group-hover:hidden" alt="Quiz icon light" />
             <img
-              src={quiz_icon}
-              className="group-hover:hidden"
-              alt="Quiz icon light"
-            />
-            <img
-              src={quiz_icon_hover}
+              src={quiz_icon_hover || "/placeholder.svg"}
               className="hidden group-hover:block"
               alt="Quiz icon dark"
             />
-            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-60 bg-rule-bg border-2 border-rule-60 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               Generate Quiz
             </span>
           </button>
           <button
             onClick={async () => {
               if (showPreview) {
-                setShowPreview(false);
-                setElaboratedContent("");
-                return;
+                setShowPreview(false)
+                setElaboratedContent("")
+                return
               }
 
-              const editor = quillRef.current?.getEditor();
-              const plainText = editor?.getText().trim();
+              const editor = quillRef.current?.getEditor()
+              const plainText = editor?.getText().trim()
 
               if (!plainText) {
-                alert("Cannot elaborate empty notes.");
-                return;
+                alert("Cannot elaborate empty notes.")
+                return
               }
 
-              setIsElaborating(true);
+              setIsElaborating(true)
               try {
-                const result = await elaborateNote(plainText); 
-                setElaboratedContent(result.expanded_notes);
-                setShowPreview(true);
+                const result = await elaborateNote(plainText)
+                setElaboratedContent(result.expanded_notes)
+                setShowPreview(true)
               } catch (error) {
-                alert("Failed to elaborate notes.");
+                alert("Failed to elaborate notes.")
               } finally {
-                setIsElaborating(false);
+                setIsElaborating(false)
               }
             }}
             className="group relative h-[30px] w-[30px] text-black flex items-center justify-center rounded-sm hover:bg-rule-bg transition-colors duration-200"
           >
+            <img src={elaborate_icon || "/placeholder.svg"} className="group-hover:hidden" alt="Elaborate icon light" />
             <img
-              src={elaborate_icon}
-              className="group-hover:hidden"
-              alt="Elaborate icon light"
-            />
-            <img
-              src={elaborate_hovered}
+              src={elaborate_hovered || "/placeholder.svg"}
               className="hidden group-hover:block"
               alt="Elaborate icon dark"
             />
-            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-text bg-rule-60 border-2 border-rule-text rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-rule-60 bg-rule-bg border-2 border-rule-60 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               Key Points
             </span>
           </button>
@@ -368,7 +403,10 @@ const AddNote = ({ onExit, note = null, onSave }) => {
             type="text"
             placeholder=" Enter Title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              setHasChanged(true)
+            }}
           />
         </div>
         <div className="h-[92%] flex flex-row overflow-hidden border-l-2 border-r-2 border-b-2 border-rule-60">
@@ -379,7 +417,10 @@ const AddNote = ({ onExit, note = null, onSave }) => {
               style={{ height: "100%" }}
               theme="snow"
               value={value}
-              onChange={setValue}
+              onChange={(content, delta, source, editor) => {
+                setValue(content)
+                setHasChanged(true)
+              }}
               modules={modules}
               placeholder="Start writing here..."
             />
@@ -388,10 +429,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
           {showPreview && (
             <div className="w-1/2 bg-rule-bg text-black p-4 overflow-auto">
               <h2 className="text-lg font-semibold mb-2">Key Points:</h2>
-              <div
-                className="prose"
-                dangerouslySetInnerHTML={{ __html: elaboratedContent }}
-              />
+              <div className="prose" dangerouslySetInnerHTML={{ __html: elaboratedContent }} />
             </div>
           )}
         </div>
@@ -404,6 +442,8 @@ const NotesList = () => {
   const [modal, popUp] = useState(false)
   const [addNote, showAddNote] = useState(false)
   const [titles, setTitle] = useState([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
   const [selectedNote, setSelectedNote] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -432,6 +472,23 @@ const NotesList = () => {
       console.error("Error fetching note:", error)
     }
   }
+
+  const handleDelete = async (titleNum) => {
+    setNoteToDelete(titleNum);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteTitle(noteToDelete);
+      setTitle((prev) => prev.filter((note) => note.title_num !== noteToDelete));
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+    } finally {
+      setShowDeleteModal(false);
+      setNoteToDelete(null);
+    }
+  };
 
   useEffect(() => {
     loadNotes()
@@ -472,10 +529,16 @@ const NotesList = () => {
               <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <h3 className="mb-10">{title.note_title}</h3>
                 <button
-                  className="text-black bg-rule-10 px-3 m-5 py-1 rounded"
+                  className="text-black bg-rule-10 py-1 px-2 rounded text-sm"
                   onClick={() => openNote(title.title_num)}
                 >
                   Open
+                </button>
+                <button
+                  className="text-black bg-rule-10 py-1 px-2 mb-4 rounded text-sm"
+                  onClick={() => handleDelete(title.title_num)}
+                >
+                  Delete
                 </button>
               </div>
             </div>
@@ -500,6 +563,29 @@ const NotesList = () => {
             loadNotes()
           }}
         />
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-[300px] text-center">
+            <h2 className="text-xl font-bold mb-4 text-rule-60">Confirm Delete</h2>
+            <p className="mb-6 text-rule-text">Are you sure you want to delete this note?</p>
+            <div className="flex justify-between gap-4">
+              <button
+                onClick={confirmDelete}
+                className="bg-rule-10 text-rule-60 px-4 py-2 rounded hover:bg-rule-60 hover:text-white"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="bg-rule-60 text-white px-4 py-2 rounded hover:bg-rule-10 hover:text-rule-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )

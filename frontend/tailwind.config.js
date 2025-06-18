@@ -11,7 +11,7 @@ export default {
           'bg':'#ebfafa',
           'text':'#7e7e7f',
           60:'#090d12',
-          30:'#5ce0e0',
+          30:'#3dcbf2',
           10:'#64f5f5'
         }
       },

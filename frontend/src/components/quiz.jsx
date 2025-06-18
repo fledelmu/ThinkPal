@@ -130,29 +130,29 @@ const QuizList = () => {
     return (
         <>
             <div className='bg-rule-bg grid grid-cols-5 justify-start border-2 border-rule-60 h-full w-full rounded-xl overflow-y-auto'>
-                {quizzes.map((quiz, index) => (
+                {quizzes.map((quizGroup, index) => (
                     <div
-                        key={quiz.quiz_num}
+                        key={quizGroup.quizzes[0].quiz_num} // Use first quiz_num in group as key
                         className='relative group bg-rule-30 w-[175px] h-[200px] m-8 rounded-xl text-white overflow-hidden'
                     >
                         <img
-                            src={quiz_img}
-                            alt='quiz image'
-                            className='w-full h-full rounded-xl object-cover'
+                        src={quiz_img}
+                        alt='quiz image'
+                        className='w-full h-full rounded-xl object-cover'
                         />
                         <div className='absolute inset-0 bg-black bg-opacity-20 rounded-xl flex flex-col gap-2 items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-                            <h3 className='mb-10'>
-                                {'Untitled Quiz ' + (index + 1)}
-                            </h3>
-                            <button
-                                onClick={() => showQuiz(quiz)}
-                                className='text-black bg-rule-10 px-3 m-5 py-1 rounded'
-                            >
-                                Open
-                            </button>
+                        <h3 className='mb-10'>
+                            {quizGroup.quizzes[0]?.quiz_title || `Quiz ${index + 1}`}
+                        </h3>
+                        <button
+                            onClick={() => showQuiz(quizGroup)}
+                            className='text-black bg-rule-10 px-3 m-5 py-1 rounded'
+                        >
+                            Open
+                        </button>
                         </div>
                     </div>
-                ))}
+                    ))}
             </div>
 
             {inQuiz && selectedQuiz && (

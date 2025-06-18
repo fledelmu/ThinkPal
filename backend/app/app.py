@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from werkzeug.utils import secure_filename 
-
+import json
+import re
 import PyPDF2 
 import requests
 import os
@@ -56,18 +57,9 @@ class Quiz(db.Model):
     __tablename__ = 'tbl_quiz'
     quiz_num = db.Column(db.Integer, primary_key=True)
     note_num = db.Column(db.Integer, db.ForeignKey('tbl_note.note_num', ondelete="CASCADE"), nullable=False)
+    quiz_title = db.Column(db.String(100), nullable=False)
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
-
-# --- Question Generation Model ---
-try:
-    tokenizer_qg = AutoTokenizer.from_pretrained("valhalla/t5-base-e2e-qg")
-    model_qg = AutoModelForSeq2SeqLM.from_pretrained("valhalla/t5-base-e2e-qg")
-    print("Local T5-base E2E QG model loaded successfully.")
-except Exception as e:
-    print(f"Error loading local T5-base E2E QG model: {e}")
-    tokenizer_qg = None
-    model_qg = None
 
 # --- Hugging Face API for Question Answering (QA) ---
 HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
@@ -128,18 +120,72 @@ def home():
     return "Server is running!"
 
 # Utility: Save AI-generated quizzes to DB
-def save_ai_quiz_to_db(note_num, qa_pairs):
+def save_ai_quiz_to_db(note_num, quiz_title, qa_pairs):
     for pair in qa_pairs:
-        quiz = Quiz(note_num=note_num, question=pair['question'], answer=pair['answer'])
+        quiz = Quiz(
+            note_num=note_num, 
+            quiz_title=quiz_title,
+            question=pair['question'], 
+            answer=pair['answer'])
         db.session.add(quiz)
     db.session.commit()
 
-# Endpoint to generate quiz from notes
+def generate_questions_and_answers_with_gemini(text, num_questions=5):
+    """
+    Generate both questions and answers using Gemini in one go
+    """
+    try:
+        prompt = f"""
+        Based on the following text, generate {num_questions} question-answer pairs for a quiz.
+        
+        Requirements:
+        - Questions should be clear and answerable from the text
+        - Questions should test understanding of key concepts
+        - Avoid yes/no questions
+        - Make sure questions are derived from the original text 
+        - Your questions should be about the text and do not ask questions such as "What is the text?" or "What is the text about?"
+        - Do not create questions that refer to the text as "the text" or "the content", use the actual text provided
+        - The answers should be words from the text, not explanations or interpretations
+        - Do not generate sentence answers only one word answers
+        - Do not refer to the text as "the text" or "the content", use the actual text provided because the user cannot see the text in the quiz screen
+        - Return one question per line, no numbering
+        - Answers should be specific and directly derived from the text    
+        - Return in JSON format as an array of objects with "question" and "answer" keys
+        
+        Text: {text}
+        
+        Return ONLY a valid JSON array in this exact format:
+        [
+            {{"question": "What is...", "answer": "The answer is..."}},
+            {{"question": "How does...", "answer": "It works by..."}}
+        ]
+        """
+        
+        response = gemini_model.generate_content(prompt)
+        response_text = response.text.strip()
+        
+        # Try to extract JSON from the response
+        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group()
+            qa_pairs = json.loads(json_str)
+            return qa_pairs
+        else:
+            print(f"--- Debug: Could not extract JSON from Gemini response: {response_text} ---")
+            return []
+            
+    except json.JSONDecodeError as e:
+        print(f"--- Debug: JSON parsing error: {e} ---")
+        return []
+    except Exception as e:
+        print(f"--- Debug: Error generating questions with Gemini: {e} ---")
+        return []
+
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     data = request.get_json()
     title_num = data.get('title_num')
-
+    quiz_title = data.get('quiz_title')
     note = None
     if title_num:
         note = Note.query.get(title_num)
@@ -149,81 +195,34 @@ def generate_quiz():
     else:
         print("--- Debug: Error: title_num is required. ---")
         return jsonify({'error': 'title_num is required to fetch notes for quiz generation.'}), 400
-
+    
     input_text = note.notes
     print(f"\n--- Debug: Fetched Note Content (first 200 chars): {input_text[:200] if input_text else 'EMPTY'} ---")
     print(f"--- Debug: Fetched Note Content Length: {len(input_text) if input_text else 0} ---")
-
-
-    if not tokenizer_qg or not model_qg:
-        print("--- Debug: Error: Question Generation model not loaded. ---")
-        return jsonify({'error': 'Question Generation model not loaded. Cannot generate questions.'}), 500
-
-    qg_prompt = "e2e question generation: " + input_text
-    inputs_qg = tokenizer_qg.encode(qg_prompt, return_tensors="pt")
     
     if not input_text.strip():
-        print("--- Debug: Input text is empty or only whitespace. QG will likely produce nothing. ---")
+        print("--- Debug: Input text is empty or only whitespace. ---")
         return jsonify({'message': 'Provided notes are empty, cannot generate quiz.', 'quiz': []}), 200
-
-    try:
-        outputs_qg = model_qg.generate(inputs_qg, max_length=256, num_beams=5, early_stopping=True)
-        decoded_output = tokenizer_qg.decode(outputs_qg[0], skip_special_tokens=True)
-        questions = [q.strip() for q in decoded_output.split("<sep>") if q.strip()]
-
-        print(f"--- Debug: QG Raw Decoded Output: '{decoded_output}' ---")
-        print(f"--- Debug: Parsed Questions List: {questions} (Count: {len(questions)}) ---")
-
-        # This check is in the correct place: after QG but before QA loop
-        if not questions:
-            print("--- Debug: QG model did not generate any valid questions. ---")
-            return jsonify({'message': 'Notes processed, but AI could not generate questions.', 'quiz': []}), 200
-
-    except Exception as e:
-        print(f"--- Debug: Error during QG model generation: {e} ---")
-        return jsonify({'error': f'Failed during question generation: {str(e)}'}), 500
-
-    qa_pairs = []
-    for i, question in enumerate(questions):
-        print(f"\n--- Debug: Processing Question {i+1}/{len(questions)}: '{question}' ---")
-        qa_payload = {
-            "inputs": {
-                "question": question,
-                "context": input_text
-            }
-        }
-        
-        try:
-            qa_response = query_hf_api(QA_API_URL, qa_payload)
-
-            print(f"--- Debug: QA API Raw Response for '{question}': {qa_response} ---")
-
-            if qa_response is None:
-                print(f"--- Debug: QA API returned None for '{question}'. Skipping. ---")
-                continue
-
-            # Expect a dictionary directly, and check if 'answer' key exists
-            if not isinstance(qa_response, dict) or 'answer' not in qa_response:
-                print(f"--- Debug: QA API response malformed for '{question}': {qa_response}. Skipping. ---")
-                continue
-
-            answer = qa_response['answer'] # Access directly from qa_response dict
-            print(f"--- Debug: Answer found for '{question}': '{answer}' ---")
-            qa_pairs.append({"question": question, "answer": answer})
-        
-        except Exception as e:
-            print(f"--- Debug: Error during QA API call for question '{question}': {e} ---")
-            continue
-
-    # These checks and return statements are now at the end, after all processing
-    print(f"\n--- Debug: Final QA Pairs collected: {qa_pairs} (Count: {len(qa_pairs)}) ---")
     
-    if not qa_pairs:
-        print("--- Debug: No complete QA pairs could be generated. ---")
-        return jsonify({'message': 'Quiz generated, but no valid question-answer pairs could be formed.', 'quiz': []}), 200
-
-    save_ai_quiz_to_db(note.note_num, qa_pairs)
-    return jsonify({'message': 'Quiz generated and saved', 'quiz': qa_pairs})
+    try:
+        # Option 1: Generate both questions and answers with Gemini
+        qa_pairs = generate_questions_and_answers_with_gemini(input_text)
+        
+        print(f"\n--- Debug: Final QA Pairs collected: {qa_pairs} (Count: {len(qa_pairs)}) ---")
+        
+        if not qa_pairs:
+            print("--- Debug: No complete QA pairs could be generated. ---")
+            return jsonify({'message': 'Quiz generated, but no valid question-answer pairs could be formed.', 'quiz': []}), 200
+        
+        # Save to database (assuming you have this function)
+        save_ai_quiz_to_db(note.note_num, quiz_title, qa_pairs)
+        
+        # Return in the exact same format as your original endpoint
+        return jsonify({'message': 'Quiz generated and saved', 'quiz': qa_pairs})
+        
+    except Exception as e:
+        print(f"--- Debug: Error during quiz generation: {e} ---")
+        return jsonify({'error': f'Failed during quiz generation: {str(e)}'}), 500
 
 
 # Utility: PDF to plain text (kept for completeness, though not used in this specific endpoint)
@@ -369,6 +368,20 @@ def get_titles_sorted():
         } for t in titles
     ])
 
+@app.route('/titles/get-num', methods=['GET'])
+def get_title_num():
+    title = request.args.get('title')
+
+    if not title:
+        return jsonify({'error': 'Missing title parameter'}), 400
+
+    result = Title.query.filter(Title.note_title == title).first()
+
+    if not result:
+        return jsonify({'error': 'Title not found'}), 404
+
+    return jsonify({'title_num': result.title_num})
+
 @app.route('/titles/<int:title_num>', methods=['GET'])
 def get_selected_titles(title_num):
     title = Title.query.filter_by(title_num=title_num).first()
@@ -447,7 +460,7 @@ def delete_note(note_num):
 def get_quizzes():
     quizzes = Quiz.query.all()
     return jsonify([
-        {'quiz_num': q.quiz_num, 'note_num': q.note_num, 'question': q.question, 'answer': q.answer} for q in quizzes
+        {'quiz_num': q.quiz_num, 'note_num': q.note_num, 'quiz_title': q.quiz_title, 'question': q.question, 'answer': q.answer} for q in quizzes
     ])
 
 if __name__ == '__main__':
