@@ -84,7 +84,7 @@ const Recents = () => {
             <h1 className='text-3xl font-bold m-4 text-rule-text'>Recently Opened</h1>
             <div className='bg-rule-bg border-2 border-rule-60 h-full w-full rounded-xl flex flex-wrap items-start justify-start overflow-y-auto p-4'>
                 {recents.length === 0 ? (
-                    <div className="text-rule-30 w-full text-center mt-10">No recent notes.</div>
+                    <div className="text-rule-text w-full text-center font-bold text-[50px] my-72 mx-50">No recent notes</div>
                 ) : (
                     recents.map((title) => (
                         <div
