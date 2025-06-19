@@ -41,26 +41,31 @@ const AddNoteOptions = ({ onExit }) => {
   const [showAddNoteEditor, setShowAddNoteEditor] = useState(false)
   const [pdfText, setPdfText] = useState(null)
 
+
   const handlePdfTextExtracted = (text) => {
     setPdfText(text)
   }
 
-  // Close options modal and open AddNote
-  const handleAddNoteClick = () => {
-    setPdfText("")
-    setShowAddNoteEditor(true)
-  }
-
   return (
     <>
-      {/* Options Modal */}
-      {!showAddNoteEditor && !pdfText && (
-        <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50">
+      <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50">
+        {showAddNoteEditor || pdfText ? (
+          <AddNote
+            note={{ notes: pdfText }}
+            onExit={() => {
+              setPdfText(null)
+              onExit()
+            }}
+          />
+        ) : (
           <div className="bg-rule-30 w-[50%] h-[60%] flex flex-col items-center">
             {!addPDFNote ? (
               <div className="bg-rule-bg w-full h-full flex flex-row items-center justify-center gap-5">
                 <button
-                  onClick={handleAddNoteClick}
+                  onClick={() => {
+                    setPdfText("")
+                    setShowAddNoteEditor(true)
+                  }}
                   className="bg-rule-60 w-[25%] h-[60%] rounded-xl m-3 text-white"
                 >
                   Add Note
@@ -81,20 +86,8 @@ const AddNoteOptions = ({ onExit }) => {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* AddNote Editor (outside the modal) */}
-      {(showAddNoteEditor || pdfText) && (
-        <AddNote
-          note={{ notes: pdfText }}
-          onExit={() => {
-            setPdfText(null)
-            setShowAddNoteEditor(false)
-            onExit()
-          }}
-        />
-      )}
+        )}
+      </div>
     </>
   )
 }
