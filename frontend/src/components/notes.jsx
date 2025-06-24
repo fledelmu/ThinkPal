@@ -48,7 +48,7 @@ const AddNoteOptions = ({ onExit }) => {
 
   return (
     <>
-      <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-50">
+      <div className="fixed inset-0 flex w-full h-full items-center justify-center bg-black bg-opacity-20 z-40">
         {showAddNoteEditor || pdfText ? (
           <AddNote
             note={{ notes: pdfText }}
