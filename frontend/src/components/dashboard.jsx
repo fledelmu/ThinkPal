@@ -30,13 +30,7 @@ const ShortcutsContainer = () => {
     )
 }
 
-const Priority = () => {
-    return(
-        <div className='bg-rule-60 h-full w-full rounded-xl flex items-center justify-center'>
-            <h1>Priority</h1>
-        </div>
-    )
-}
+
 
 // Shows deadlines
 const Shortcuts = () => {
@@ -80,11 +74,15 @@ const Recents = () => {
     }, []);
 
     return (
-        <div className='h-full w-full flex flex-col text-left'>
-            <h1 className='text-3xl font-bold m-4 text-rule-text'>Recently Opened</h1>
-            <div className='bg-rule-bg border-2 border-rule-60 h-full w-full rounded-xl flex flex-wrap items-start justify-start overflow-y-auto p-4'>
+        <div className="h-[40vw] w-full flex flex-col text-left">
+            <h1 className="text-3xl font-bold m-4 text-rule-text">Recently Opened</h1>
+
+            {/* Use flex-grow to occupy remaining space instead of h-[95vh] */}
+            <div className="flex-grow bg-rule-bg border-2 border-rule-60 w-full rounded-xl flex flex-wrap items-start justify-start overflow-y-auto p-2">
                 {recents.length === 0 ? (
-                    <div className="text-rule-text w-full text-center font-bold text-[50px] my-72 mx-50">No recent notes</div>
+                    <div className="text-rule-text w-full text-center font-bold text-[50px] mx-50">
+                        No recent notes
+                    </div>
                 ) : (
                     recents.map((title) => (
                         <div
