@@ -16,6 +16,7 @@ const QuizCard = ({ quizData }) => {
     const [score, setScore] = useState(0);
     const [answer, setAnswer] = useState('');
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [quizCompleted, setQuizCompleted] = useState(false);
 
     const currentQuiz = quizData.quizzes[currentIndex];
 
@@ -35,44 +36,53 @@ const QuizCard = ({ quizData }) => {
 
         setAnswer('');
 
-        // Move to the next question if there is one
         if (currentIndex < quizData.quizzes.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
             console.log('Quiz completed!');
-            // You can add a callback to exit or display results
+            setQuizCompleted(true);
         }
     };
 
-    if (!currentQuiz) return <p>No quizzes available.</p>;
+    if (!quizData.quizzes.length) return <p>No quizzes available.</p>;
 
     return (
         <div className='w-full h-full flex flex-col items-center justify-center'>
-            <div className='relative flex flex-col items-center justify-center bg-rule-60 w-[70%] h-[70%] m-2 rounded-xl text-white'>
-                <div className='absolute top-5 right-5 text-2xl font-bold'>{score}</div>
-                <h3 className='text-center text-2xl w-[80%]'>
-                    {currentQuiz.question}
-                </h3>
-            </div>
+            {!quizCompleted ? (
+                <>
+                    <div className='relative flex flex-col items-center justify-center bg-rule-60 w-[70%] h-[70%] m-2 rounded-xl text-white'>
+                        <div className='absolute top-5 right-5 text-2xl font-bold'>{score}</div>
+                        <h3 className='text-center text-2xl w-[80%]'>
+                            {currentQuiz.question}
+                        </h3>
+                    </div>
 
-            <div className='bg-rule-60 w-[65%] border-2 h-[5%] m-2 rounded-xl  text-white flex flex-row items-center'>
-                <input
-                    type='text'
-                    placeholder='Answer here...'
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    className='bg-rule-60 h-full w-[90%] rounded-xl p-4 text-white'
-                />
-                <button
-                    onClick={handleSubmit}
-                    className='p-1 rounded w-[7%] bg-rule-10 text-black'
-                >
-                    Submit
-                </button>
-            </div>
+                    <div className='bg-rule-60 w-[65%] border-2 h-[5%] m-2 rounded-xl  text-white flex flex-row items-center'>
+                        <input
+                            type='text'
+                            placeholder='Answer here...'
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            className='bg-rule-60 h-full w-[90%] rounded-xl p-4 text-white'
+                        />
+                        <button
+                            onClick={handleSubmit}
+                            className='p-1 rounded w-[7%] bg-rule-10 text-black'
+                        >
+                            Submit
+                        </button>
+                    </div>
+                </>
+            ) : (
+                <div className='flex flex-col items-center bg-rule-60 w-[70%] h-[50%] m-2 rounded-xl text-white justify-center'>
+                    <h2 className='text-3xl font-bold mb-4'>Quiz Completed!</h2>
+                    <p className='text-xl'>Your Score: {score} / {quizData.quizzes.length}</p>
+                </div>
+            )}
         </div>
     );
 };
+
 
 const QuizScreen = ({ quizData, onExit }) => {
     return (
