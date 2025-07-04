@@ -17,11 +17,13 @@ The web app is deployed on Render there is no installation or setup required jus
 - Positive feedback on core functionalities.
 
 ## Future Improvements
+The developers' future plans for the application.
 - Workflow related features(to-do, calendars, and etc).
 - Enhance quiz feature.
 - Collaborative networking
 
 ## Authors
+The Authors and their GitHub Links
 - Brendan Acuna - [brendanjoshua](https://github.com/brendanjoshua)
 - Allain Boncilao - [Allian21](https://github.com/Allian21)
 - Francis Del Mundo - [fledelmu](https://github.com/fledelmu)
