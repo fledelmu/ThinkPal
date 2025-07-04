@@ -13,8 +13,8 @@ Click the link to check out the web application.
 Placeholder
 
 ## Team Individual Certificates
-[Acuna](Team%COG%Individual%Certificates/Acuna%Certificates)<br>
-[Boncilao](Team%COG%Individual%Certificates/Boncilao%Certificates)<br>
-[Del Mundo](Team%COG%Individual%Certificates/Del%Mundo%Certificates)
+[Acuna](Team%20COG%20Individual%20Certificates/Acuna%20Certificates)<br>
+[Boncilao](Team%20COG%20Individual%20Certificates/Boncilao%20Certificates)<br>
+[Del Mundo](Team%20COG%20Individual%20Certificates/Del%20Mundo%20Certificates)
 
 Thank you for checking out our repository!
