@@ -10,7 +10,7 @@ Click the link to check out the web application.
 <a href="https://app-dev-project-frontend.onrender.com">ThinkPal Web App</a>
 
 ## User Manual
-Placeholder
+[USER MANUAL](USER_MANUAL.md)
 
 ## Team Individual Certificates
 [Brendan Acuna](Team%20COG%20Individual%20Certificates/Acuna%20Certificates)<br>
