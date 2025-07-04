@@ -10,6 +10,7 @@ Click the link to check out the web application.
 <a href="https://app-dev-project-frontend.onrender.com">ThinkPal Web App</a>
 
 ## User Manual
+Check out the User Manual to learn about the setup and usage of the web app.
 [USER MANUAL](USER_MANUAL.md)
 
 ## Team Individual Certificates
