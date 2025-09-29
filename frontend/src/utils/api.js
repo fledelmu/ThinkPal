@@ -154,7 +154,7 @@ const getQuizzes = async () => {
 
 const elaborateNote = async (note) => {
     try {
-        const response = await axios.post(`${URL}/gemini/elaborate_note`, {
+        const response = await axios.post(`${URL}/groq/elaborate_note`, {
             note_content: note
         });
         return response.data;
