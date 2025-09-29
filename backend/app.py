@@ -87,7 +87,7 @@ groq_client = None
 if GROQ_API_KEY:
     try:
         groq_client = groq.Groq(api_key=GROQ_API_KEY)
-        GROQ_MODEL_NAME = "llama3-8b-8192" 
+        GROQ_MODEL_NAME = "openai/gpt-oss-120b" 
         print(f"Groq client initialized with model: {GROQ_MODEL_NAME}.")
     except Exception as e:
         print(f"Error initializing Groq client: {e}")
