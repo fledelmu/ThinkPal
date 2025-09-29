@@ -30,8 +30,6 @@ const ShortcutsContainer = () => {
     )
 }
 
-
-
 // Shows deadlines
 const Shortcuts = () => {
     return(
