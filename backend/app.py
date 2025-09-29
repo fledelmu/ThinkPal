@@ -20,6 +20,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
+CORS(app)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -64,7 +66,6 @@ with app.app_context():
     test_db_connection()
 
 CORS(app, origins=[frontend_url], supports_credentials=True)
-
 # Initialize Gemini Pro model if API key is set
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if GEMINI_API_KEY:
