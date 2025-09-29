@@ -111,9 +111,9 @@ def save_ai_quiz_to_db(note_num, quiz_title, qa_pairs):
         db.session.add(quiz)
     db.session.commit()
 
-def generate_questions_and_answers_with_gemini(text, num_questions=5):
+def generate_questions_and_answers_with_groq(text, num_questions=5):
     """
-    Generate both questions and answers using Gemini in one go
+    Generate both questions and answers using Groq in one go
     """
     try:
         prompt = f"""
@@ -141,10 +141,18 @@ def generate_questions_and_answers_with_gemini(text, num_questions=5):
             {{"question": "How does...", "answer": "It works by..."}}
         ]
         """
-        
-        response = gemini_model.generate_content(prompt)
-        response_text = response.text.strip()
-        
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL_NAME,  # e.g., "llama-3.1-8b-instant"
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that generates quizzes."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,  # keep answers deterministic
+        )
+
+        response_text = response.choices[0].message.content.strip()
+
         # Try to extract JSON from the response
         json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
         if json_match:
@@ -152,14 +160,14 @@ def generate_questions_and_answers_with_gemini(text, num_questions=5):
             qa_pairs = json.loads(json_str)
             return qa_pairs
         else:
-            print(f"--- Debug: Could not extract JSON from Gemini response: {response_text} ---")
+            print(f"--- Debug: Could not extract JSON from Groq response: {response_text} ---")
             return []
-            
+
     except json.JSONDecodeError as e:
         print(f"--- Debug: JSON parsing error: {e} ---")
         return []
     except Exception as e:
-        print(f"--- Debug: Error generating questions with Gemini: {e} ---")
+        print(f"--- Debug: Error generating questions with Groq: {e} ---")
         return []
 
 @app.route('/generate_quiz', methods=['POST'])
@@ -187,7 +195,7 @@ def generate_quiz():
     
     try:
         # Option 1: Generate both questions and answers with Gemini
-        qa_pairs = generate_questions_and_answers_with_gemini(input_text)
+        qa_pairs = generate_questions_and_answers_with_groq(input_text)
         
         print(f"\n--- Debug: Final QA Pairs collected: {qa_pairs} (Count: {len(qa_pairs)}) ---")
         
@@ -241,7 +249,8 @@ def groq_elaborate_note():
 
         **Return the response as raw HTML**, using appropriate HTML tags like `<ul>`, `<li>`, `<strong>`. 
         For any new lines or breaks *within* a bullet point's text content, use `<br>` tags explicitly.
-        *Do not wrap the HTML in markdown code blocks. Format new lines properly too.*
+        *Do not wrap the HTML in markdown code blocks. Format new lines properly too. The structure of the 
+        elaboration must be in bullet form.*
 
         Study Notes:
         {note_content}
