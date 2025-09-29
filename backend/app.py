@@ -18,9 +18,15 @@ from datetime import datetime
 
 load_dotenv()
 
-
 app = Flask(__name__)
-CORS(app)
+
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173") 
+
+CORS(app, resources={
+    r"/*": {
+        "origins": frontend_url
+    }
+})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
