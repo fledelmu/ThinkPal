@@ -37,13 +37,14 @@ const getNote = async () => {
 
 const getSelectedNote = async (note_num) => {
   try {
-    const response = await api.get(`/notes/${note_num}`);
-    return response.data;
+    const response = await api.get(`/notes/${note_num}`); // note_num matches title_num
+    return response.data; // single note object
   } catch (error) {
     console.error('Error fetching note:', error);
     throw error;
   }
 };
+
 
 const updateNote = async (note_num, note) => {
   try {
