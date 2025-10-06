@@ -258,55 +258,58 @@ const AddNote = ({ onExit, note = null, onSave }) => {
   // Extract text from the Quill editor
   const handleSave = async () => {
     if (!hasChanged) {
-      console.log("No changes detected, returning existing titleNum:", titleNum)
-      return titleNum
+      console.log("No changes detected, returning existing titleNum:", titleNum);
+      return titleNum;
     }
 
-    setHasSaved(true)
-    setHasChanged(false)
+    setHasSaved(true);
+    setHasChanged(false);
 
-    const editor = quillRef.current.getEditor()
-    const plain_text = editor.getText().trim()
-    const html = editor.root.innerHTML.trim()
+    const editor = quillRef.current.getEditor();
+    const plain_text = editor.getText().trim();
+    const html = editor.root.innerHTML.trim();
 
-    const defaultTitle = "Untitled Note"
-    const defaultContent = "<p><em>No content provided.</em></p>"
+    const defaultTitle = "Untitled Note";
+    const defaultContent = "<p><em>No content provided.</em></p>";
 
-    const finalTitle = title.trim() === "" ? defaultTitle : title.trim()
-    const finalContent = plain_text === "" || html === "<p><br></p>" ? defaultContent : html
+    const finalTitle = title.trim() === "" ? defaultTitle : title.trim();
+    const finalContent =
+      plain_text === "" || html === "<p><br></p>" ? defaultContent : html;
 
     try {
-      if (exists) {
-        console.log("Updating existing note with titleNum:", note.title_num)
-        const key = note.title_num
-        await updateNote(key, finalContent)
-        await updateTitle(key, finalTitle)
-        return key
+      if (exists && note?.title_num) {
+        // Existing note → update both note and title
+        console.log("Updating existing note with titleNum:", note.title_num);
+        await updateNote(note.title_num, finalContent);
+        await updateTitle(note.title_num, finalTitle);
+        return note.title_num;
       } else {
-        console.log("Creating new note with title:", finalTitle)
-        await postTitle(finalTitle)
+        // New note → create title first
+        console.log("Creating new title:", finalTitle);
+        await postTitle(finalTitle);
 
-        
-        await postNote(finalContent, finalTitle)
-        const newTitleNum = await getTitleNum(finalTitle)
-
-        console.log("Fetching title_num using getTitleNum...")
+        // Get the numeric title_num from backend
+        const newTitleNum = await getTitleNum(finalTitle);
         if (!newTitleNum) {
-          throw new Error("Failed to retrieve title_num from getTitleNum")
+          throw new Error("Failed to retrieve title_num from backend");
         }
 
-        checkExistance(true)
-        setTitleNum(newTitleNum)
+        checkExistance(true);
+        setTitleNum(newTitleNum);
 
-        return newTitleNum
+        // Now create the note with the numeric title_num
+        console.log("Creating new note with titleNum:", newTitleNum);
+        await postNote(finalContent, newTitleNum);
+
+        return newTitleNum;
       }
     } catch (error) {
-      console.error("Error in handleSave:", error)
-      throw error
+      console.error("Error in handleSave:", error);
+      throw error;
     } finally {
-      setTimeout(() => setHasSaved(false), 500)
+      setTimeout(() => setHasSaved(false), 500);
     }
-  }
+  };
 
 
   return (
