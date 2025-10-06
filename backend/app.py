@@ -379,7 +379,7 @@ def groq_elaborate_note():
             messages=[{"role": "user", "content": prompt_groq_fidelity}],
             max_tokens=10,
             temperature=0.0,
-        )
+        )   
         fidelity_score = response_groq_fidelity.choices[0].message.content.strip()
 
         # --- Return combined result ---
@@ -393,118 +393,204 @@ def groq_elaborate_note():
         return jsonify({'error': f'Failed to elaborate notes with Groq: {str(e)}'}), 500
 
 
+
 # CRUD API ENDPOINTS
 
-# titles
+# ------------------ TITLES ------------------
+
 @app.route('/titles', methods=['GET'])
+@login_required
 def get_titles():
-    titles = Title.query.all()
-    return jsonify([{'title_num': t.title_num, 'note_title': t.note_title} for t in titles])
+    titles = Title.query.filter_by(user_id=current_user.user_id).all()
+    return jsonify([
+        {'title_num': t.title_num, 'note_title': t.note_title, 'user_id': t.user_id}
+        for t in titles
+    ])
 
 @app.route('/titles/sorted', methods=['GET'])
+@login_required
 def get_titles_sorted():
-    titles = Title.query.order_by(Title.date_accessed.desc()).all()
+    titles = Title.query.filter_by(user_id=current_user.user_id).order_by(Title.date_accessed.desc()).all()
     return jsonify([
         {
             'title_num': t.title_num,
             'note_title': t.note_title,
-            'date_accessed': t.date_accessed
+            'date_accessed': t.date_accessed,
+            'user_id': t.user_id
         } for t in titles
     ])
 
 @app.route('/titles/get-num', methods=['GET'])
+@login_required
 def get_title_num():
     title = request.args.get('title')
-
     if not title:
         return jsonify({'error': 'Missing title parameter'}), 400
 
-    result = Title.query.filter(Title.note_title == title).first()
-
+    result = Title.query.filter_by(note_title=title, user_id=current_user.user_id).first()
     if not result:
         return jsonify({'error': 'Title not found'}), 404
 
-    return jsonify({'title_num': result.title_num})
+    return jsonify({'title_num': result.title_num, 'user_id': result.user_id})
 
 @app.route('/titles/<int:title_num>', methods=['GET'])
+@login_required
 def get_selected_titles(title_num):
-    title = Title.query.filter_by(title_num=title_num).first()
+    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first_or_404()
     return jsonify({
         'title_num': title.title_num,
-        'note_title': title.note_title})
+        'note_title': title.note_title,
+        'user_id': title.user_id
+    })
 
 @app.route('/titles', methods=['POST'])
+@login_required
 def create_title():
     data = request.get_json()
-    new_title = Title(note_title=data['note_title'])
+    if not data.get('note_title'):
+        return jsonify({'error': 'note_title is required'}), 400
+
+    new_title = Title(
+        note_title=data['note_title'],
+        user_id=current_user.user_id,
+        date_accessed=datetime.now()
+    )
     db.session.add(new_title)
     db.session.commit()
-    return jsonify({'note_title': new_title.note_title}), 201
+    return jsonify({
+        'title_num': new_title.title_num,
+        'note_title': new_title.note_title,
+        'user_id': new_title.user_id
+    }), 201
 
 @app.route('/titles/<int:title_num>', methods=['PUT'])
+@login_required
 def update_title(title_num):
     data = request.get_json()
-    title = Title.query.get_or_404(title_num)
-    title.note_title = data['note_title']
+    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first_or_404()
+    title.note_title = data.get('note_title', title.note_title)
     title.date_accessed = datetime.now()
     db.session.commit()
-    return jsonify({'title_num': title.title_num, 'note_title': title.note_title, 'date_accessed': title.date_accessed})
+    return jsonify({
+        'title_num': title.title_num,
+        'note_title': title.note_title,
+        'date_accessed': title.date_accessed,
+        'user_id': title.user_id
+    })
 
 @app.route('/titles/<int:title_num>', methods=['DELETE'])
+@login_required
 def delete_title(title_num):
-    title = Title.query.get_or_404(title_num)
+    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first_or_404()
     db.session.delete(title)
     db.session.commit()
-    return jsonify({'message': 'Title deleted'})
+    return jsonify({'message': 'Title deleted', 'user_id': current_user.user_id})
 
-# notes
+# ------------------ NOTES ------------------
+
 @app.route('/notes', methods=['GET'])
+@login_required
 def get_notes():
-    notes = Note.query.all()
+    notes = (
+        db.session.query(Note)
+        .join(Title)
+        .filter(Title.user_id == current_user.user_id)
+        .all()
+    )
     return jsonify([
-        {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes} for n in notes
+        {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes, 'user_id': Title.query.get(n.title_num).user_id}
+        for n in notes
     ])
 
 @app.route('/notes/<int:title_num>', methods=['GET'])
+@login_required
 def get_selected_notes(title_num):
-    note = Note.query.filter_by(title_num=title_num).first()
+    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first_or_404()
+    notes = Note.query.filter_by(title_num=title.title_num).all()
+    return jsonify([
+        {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes, 'user_id': title.user_id}
+        for n in notes
+    ])
+
+@app.route('/notes', methods=['POST'])
+@login_required
+def create_note():
+    data = request.get_json()
+    title_num = data.get('title_num')
+    note_text = data.get('notes')
+
+    if not title_num or not note_text:
+        return jsonify({'error': 'title_num and notes are required'}), 400
+
+    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first()
+    if not title:
+        return jsonify({'error': 'Title not found or does not belong to this user'}), 403
+
+    new_note = Note(
+        title_num=title.title_num,
+        notes=note_text
+    )
+    db.session.add(new_note)
+    db.session.commit()
+    return jsonify({
+        'note_num': new_note.note_num,
+        'title_num': new_note.title_num,
+        'notes': new_note.notes,
+        'user_id': current_user.user_id
+    }), 201
+
+@app.route('/notes/<int:note_num>', methods=['PUT'])
+@login_required
+def update_note(note_num):
+    data = request.get_json()
+    note = (
+        db.session.query(Note)
+        .join(Title)
+        .filter(Note.note_num == note_num, Title.user_id == current_user.user_id)
+        .first_or_404()
+    )
+    note.notes = data.get('notes', note.notes)
+    db.session.commit()
     return jsonify({
         'note_num': note.note_num,
         'title_num': note.title_num,
-        'notes': note.notes
+        'notes': note.notes,
+        'user_id': current_user.user_id
     })
 
-@app.route('/notes', methods=['POST'])
-def create_note():
-    data = request.get_json()
-    latest_title = Title.query.order_by(Title.title_num.desc()).first()
-    new_note = Note(title_num=latest_title.title_num, notes=data['notes'])
-    db.session.add(new_note)
-    db.session.commit()
-    return jsonify({'note_num': new_note.note_num, 'title_num': new_note.title_num, 'notes': new_note.notes}), 201
-
-@app.route('/notes/<int:note_num>', methods=['PUT'])
-def update_note(note_num):
-    data = request.get_json()
-    note = Note.query.get_or_404(note_num)
-    note.title_num = data['title_num']
-    note.notes = data['notes']
-    db.session.commit()
-    return jsonify({'note_num': note.note_num, 'title_num': note.title_num, 'notes': note.notes})
-
 @app.route('/notes/<int:note_num>', methods=['DELETE'])
+@login_required
 def delete_note(note_num):
-    note = Note.query.get_or_404(note_num)
+    note = (
+        db.session.query(Note)
+        .join(Title)
+        .filter(Note.note_num == note_num, Title.user_id == current_user.user_id)
+        .first_or_404()
+    )
     db.session.delete(note)
     db.session.commit()
-    return jsonify({'message': 'Note deleted'})
+    return jsonify({'message': 'Note deleted', 'user_id': current_user.user_id})
 
-# quizzes (Read only, since AI generates quizzes)
+# ------------------ QUIZZES ------------------
 @app.route('/quizzes', methods=['GET'])
+@login_required
 def get_quizzes():
-    quizzes = Quiz.query.all()
+    quizzes = (
+        db.session.query(Quiz)
+        .join(Note)
+        .join(Title)
+        .filter(Title.user_id == current_user.user_id)
+        .all()
+    )
     return jsonify([
-        {'quiz_num': q.quiz_num, 'note_num': q.note_num, 'quiz_title': q.quiz_title, 'question': q.question, 'answer': q.answer} for q in quizzes
+        {
+            'quiz_num': q.quiz_num,
+            'note_num': q.note_num,
+            'quiz_title': q.quiz_title,
+            'question': q.question,
+            'answer': q.answer,
+            'user_id': Title.query.join(Note).filter(Note.note_num == q.note_num).first().user_id
+        } for q in quizzes
     ])
 
 """
