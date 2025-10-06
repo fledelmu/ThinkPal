@@ -1,6 +1,7 @@
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -27,6 +28,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 # Test DB connection
@@ -37,20 +47,39 @@ def test_db_connection():
     except Exception as e:
         print(f'Database connection failed: {e}')
 
+class User(UserMixin, db.Model):
+    __tablename__ = 'tbl_users'
+    user_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.now)
+
+    # Relationships
+    titles = db.relationship('Title', backref='user', lazy=True, cascade="all, delete", passive_deletes=True)
+    tasks = db.relationship('Task', backref='user', lazy=True, cascade="all, delete", passive_deletes=True)
+
+    def get_id(self):
+        return str(self.user_id)
+
 
 class Title(db.Model):
     __tablename__ = 'tbl_titles'
     title_num = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('tbl_users.user_id', ondelete="CASCADE"), nullable=False)
     note_title = db.Column(db.String(255), nullable=False)
     date_accessed = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
     notes = db.relationship('Note', backref='title', lazy=True, cascade="all, delete", passive_deletes=True)
+
 
 class Note(db.Model):
     __tablename__ = 'tbl_note'
     note_num = db.Column(db.Integer, primary_key=True)
     title_num = db.Column(db.Integer, db.ForeignKey('tbl_titles.title_num', ondelete="CASCADE"), nullable=False)
     notes = db.Column(db.Text, nullable=False)
+
     quizzes = db.relationship('Quiz', backref='note', lazy=True, cascade="all, delete", passive_deletes=True)
+
 
 class Quiz(db.Model):
     __tablename__ = 'tbl_quiz'
@@ -60,12 +89,29 @@ class Quiz(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=False)
 
+
+class Task(db.Model):
+    __tablename__ = 'tbl_tasks'
+    task_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('tbl_users.user_id', ondelete="CASCADE"), nullable=False)
+
+    task_name = db.Column(db.String(255), nullable=False)
+    task_details = db.Column(db.Text, nullable=True)
+
+    # e.g. "Pending", "In Progress", "Completed"
+    status = db.Column(db.String(50), default="Pending", nullable=False)
+
+    date_created = db.Column(db.DateTime, default=datetime.now)
+    date_completed = db.Column(db.DateTime, nullable=True)
+
+
 # Test DB connection at startup with app context
 with app.app_context():
     db.create_all()
     test_db_connection()
 
 CORS(app, origins=[frontend_url], supports_credentials=True)
+
 # Initialize Gemini Pro model if API key is set
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if GEMINI_API_KEY:
@@ -170,6 +216,47 @@ def generate_questions_and_answers_with_groq(text, num_questions=5):
         print(f"--- Debug: Error generating questions with Groq: {e} ---")
         return []
 
+# Authentication Routes
+@app.route('/login/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already exists'}), 400
+
+    user = User(username=username, password=password)
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({'message': 'User registered successfully'})
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if not user or user.password != password:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    login_user(user)
+    return jsonify({'message': f'Welcome, {user.username}!'})
+
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({'message': 'Logged out successfully'})
+
+@app.route('/protected', methods=['GET'])
+@login_required
+def protected():
+    return jsonify({'message': f'Hello {current_user.username}, you are logged in!'})
+
+# AI Routes
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     data = request.get_json()

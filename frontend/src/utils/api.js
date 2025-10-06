@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 
-const URL =import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 
 // Note API
@@ -128,6 +128,7 @@ const deleteTitle = async (title_num) => {
     }
 }
 
+// Quiz API
 const generateQuiz = async (title_num, title, text) => {
     try {
         const response = await axios.post(`${URL}/generate_quiz`, {
@@ -174,8 +175,38 @@ const getRecents = async () => {
     }
 }
 
+// Authentication
+const registerUser = async () => {
+    try{
+        const response = await axios.post(`${URL}/login/register`,{
+            username,
+            password,
+        });
+        return response.data;
+    } catch (error){
+        console.error("Registration failed:", error.response?.data || error.message);
+        throw error;
+    }
+}
+
+// Login user
+const loginUser = async (username, password) => {
+  try {
+    const response = await axios.post(`${URL}/login`, {
+      username,
+      password,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Login failed:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 export { postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Note methods
         postTitle, updateTitle, getSelectedTitle, getTitle, getTitleNum, deleteTitle, // Title methods
         generateQuiz, getQuizzes, // Quiz methods
-        getRecents //Dashboard
+        getRecents, // Dashboard Methods
+        registerUser, loginUser // Authentication Methods
 };
