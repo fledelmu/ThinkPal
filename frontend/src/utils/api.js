@@ -176,7 +176,7 @@ const getRecents = async () => {
 }
 
 // Authentication
-const registerUser = async () => {
+const registerUser = async ( username, password) => {
     try{
         const response = await axios.post(`${URL}/login/register`,{
             username,
