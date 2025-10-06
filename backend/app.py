@@ -30,10 +30,13 @@ app.config['SESSION_COOKIE_SECURE'] = True
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 CORS(
     app,
-    origins=[frontend_url],
-    supports_credentials=True,
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"]
+    resources={r"/*": {
+        "origins": [frontend_url, "https://app-dev-project-frontend.onrender.com"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True,
+        "expose_headers": ["Content-Type", "Authorization"]
+    }}
 )
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
