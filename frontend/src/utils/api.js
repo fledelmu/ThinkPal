@@ -8,15 +8,19 @@ const api = axios.create({
 });
 
 // -------------------- NOTE API --------------------
-const postNote = async (note) => {
+const postNote = async (title_num, note) => {
   try {
-    const response = await api.post('/notes', { notes: note });
+    const response = await api.post('/notes', {
+      title_num: title_num,
+      notes: note,
+    });
     return response.data;
   } catch (error) {
-    console.error('Error posting note:', error);
+    console.error('Error posting note:', error.response?.data || error.message);
     throw error;
   }
 };
+
 
 const getNote = async () => {
   try {
