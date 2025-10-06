@@ -1,14 +1,15 @@
-import './App.css'
-import Sidebar from './components/sidebar'
-import { Dashboard } from './components/dashboard'
-import Quiz from './components/quiz'
-// import Routines from './components/routines'
-import { Notes } from './components/notes'
-import { useState, useEffect } from 'react'
-import { LoadingProvider } from './components/LoadingContext'
+import './App.css';
+import Sidebar from './components/sidebar';
+import { Dashboard } from './components/dashboard';
+import Quiz from './components/quiz';
+import { Notes } from './components/notes';
+import { useState, useEffect } from 'react';
+import { LoadingProvider } from './components/LoadingContext';
+import LoginScreen from './components/login';
 
 function App() {
-  const [activeTab, setActive] = useState("Dashboard")
+  const [activeTab, setActive] = useState("Dashboard");
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
 
   useEffect(() => {
     const handler = (e) => {
@@ -20,20 +21,26 @@ function App() {
     return () => window.removeEventListener('navigateToTab', handler);
   }, []);
 
+  if (!isLoggedIn) {
+    return (
+      <LoadingProvider>
+        <LoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />
+      </LoadingProvider>
+    );
+  }
+
   return (
     <LoadingProvider>
       <div className='flex bg-rule-bg w-screen h-screen'>
         <Sidebar setActive={setActive} activeTab={activeTab} />
-
         <div>
           {activeTab === "Dashboard" && <Dashboard />}
           {activeTab === "Quizzes" && <Quiz />}
-          {/* {activeTab === "Routines" && <Routines />} */}
           {activeTab === "Notes" && <Notes />}
         </div>
       </div>
     </LoadingProvider>
-  )
+  );
 }
 
-export default App
+export default App;
