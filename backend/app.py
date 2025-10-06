@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from werkzeug.utils import secure_filename 
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import re
 import PyPDF2 
@@ -51,7 +52,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'tbl_users'
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.now)
 
     # Relationships
@@ -216,17 +217,22 @@ def generate_questions_and_answers_with_groq(text, num_questions=5):
         print(f"--- Debug: Error generating questions with Groq: {e} ---")
         return []
 
-# Authentication Routes
+# Authentication routes
 @app.route('/login/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
     if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already exists'}), 400
 
-    user = User(username=username, password=password)
+    hashed_password = generate_password_hash(password)
+
+    user = User(username=username, password=hashed_password)
     db.session.add(user)
     db.session.commit()
 
@@ -239,11 +245,12 @@ def login():
     password = data.get('password')
 
     user = User.query.filter_by(username=username).first()
-    if not user or user.password != password:
+    if not user or not check_password_hash(user.password, password):
         return jsonify({'error': 'Invalid username or password'}), 401
 
     login_user(user)
     return jsonify({'message': f'Welcome, {user.username}!'})
+
 
 @app.route('/logout', methods=['POST'])
 @login_required
