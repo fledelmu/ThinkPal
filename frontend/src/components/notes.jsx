@@ -299,7 +299,7 @@ const AddNote = ({ onExit, note = null, onSave }) => {
 
         // Now create the note with the numeric title_num
         console.log("Creating new note with titleNum:", newTitleNum);
-        await postNote(finalContent, newTitleNum);
+        await postNote(newTitleNum, finalContent);
 
         return newTitleNum;
       }
