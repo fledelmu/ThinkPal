@@ -516,15 +516,20 @@ def get_notes():
         for n in notes
     ])
 
-@app.route('/notes/<int:title_num>', methods=['GET'])
+@app.route('/notes/<int:note_num>', methods=['GET'])
 @login_required
-def get_selected_notes(title_num):
-    title = Title.query.filter_by(title_num=title_num, user_id=current_user.user_id).first_or_404()
-    notes = Note.query.filter_by(title_num=title.title_num).all()
-    return jsonify([
-        {'note_num': n.note_num, 'title_num': n.title_num, 'notes': n.notes, 'user_id': title.user_id}
-        for n in notes
-    ])
+def get_selected_note(note_num):
+    note = Note.query.filter_by(note_num=note_num).first_or_404()
+    title = Title.query.get(note.title_num)
+    if title.user_id != current_user.user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    return jsonify({
+        'note_num': note.note_num,
+        'title_num': note.title_num,
+        'notes': note.notes,
+        'user_id': title.user_id
+    })
 
 @app.route('/notes', methods=['POST'])
 @login_required
@@ -540,7 +545,9 @@ def create_note():
     if not title:
         return jsonify({'error': 'Title not found or does not belong to this user'}), 403
 
+    # Make note_num equal to title_num
     new_note = Note(
+        note_num=title.title_num,  
         title_num=title.title_num,
         notes=note_text
     )
