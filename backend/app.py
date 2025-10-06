@@ -23,7 +23,12 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-CORS(app)
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+
+
+frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+CORS(app, origins=[frontend_url], supports_credentials=True)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -39,7 +44,7 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
 
 # Test DB connection
 def test_db_connection():
@@ -112,7 +117,7 @@ with app.app_context():
     db.create_all()
     test_db_connection()
 
-CORS(app, origins=[frontend_url], supports_credentials=True)
+
 
 # Initialize Gemini Pro model if API key is set
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
