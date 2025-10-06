@@ -285,10 +285,12 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       } else {
         console.log("Creating new note with title:", finalTitle)
         await postTitle(finalTitle)
+
+        
         await postNote(finalContent, finalTitle)
+        const newTitleNum = await getTitleNum(finalTitle)
 
         console.log("Fetching title_num using getTitleNum...")
-        const newTitleNum = await getTitleNum(finalTitle)
         if (!newTitleNum) {
           throw new Error("Failed to retrieve title_num from getTitleNum")
         }

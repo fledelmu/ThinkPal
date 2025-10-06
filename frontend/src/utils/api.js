@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 // -------------------- NOTE API --------------------
-const postNote = async (title_num, note) => {
+const postNote = async (note, title_num) => {
   try {
     const response = await api.post('/notes', {
       title_num: title_num,
