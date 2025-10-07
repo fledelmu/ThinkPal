@@ -34,14 +34,18 @@ const Admin = () => {
   const handleUpdate = async (userId) => {
     const updatedUsername = prompt('Enter new username:');
     const updatedRole = prompt('Enter new role (user/admin):');
+    const updatedPassword = prompt('Enter new password (leave blank to keep current):');
+    
     if (!updatedUsername || !updatedRole) return;
+    
     try {
-      await updateUser(userId, updatedUsername, updatedRole);
-      fetchUsers();
+        await updateUser(userId, updatedUsername, updatedRole, updatedPassword || undefined);
+        fetchUsers();
     } catch (err) {
-      console.error('Error updating user:', err);
+        console.error('Error updating user:', err);
     }
-  };
+    };
+
 
   const handleDelete = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;

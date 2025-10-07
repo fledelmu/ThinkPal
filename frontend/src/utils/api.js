@@ -288,15 +288,20 @@ const createUser = async (username, password, role) => {
   }
 }
 
-const updateUser = async (user_id) => {
-  try{
-    const response = api.put(`/admin/update-user/${user_id}`);
+const updateUser = async (user_id, username, role, password) => {
+  try {
+    const response = await api.put(`/admin/update-user/${user_id}`, {
+      username,
+      role,
+      password
+    });
     return response.data;
   } catch (error) {
     console.error("Unable to update user: ", error);
     throw error;
   }
-}
+};
+
 
 const deleteUser = async (user_id) => {
   try{
