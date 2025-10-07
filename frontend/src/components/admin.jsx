@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUser, deleteUser } from '../utils/api';
 
-const AdminScreen = () => {
+const Admin = () => {
   const [users, setUsers] = useState([]);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -101,7 +101,7 @@ const AdminScreen = () => {
           {users.map((u) => (
             <tr key={u.user_id}>
               <td>{u.user_id}</td>
-              <td>{u.username}</td>
+              <td>{u.username}</td> 
               <td>{u.role}</td>
               <td>
                 <button onClick={() => handleUpdate(u.user_id)} className="mr-2 px-2 py-1 bg-yellow-500 text-white rounded">Edit</button>
@@ -115,4 +115,4 @@ const AdminScreen = () => {
   );
 };
 
-export default AdminScreen;
+export default Admin;
