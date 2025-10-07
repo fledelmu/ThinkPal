@@ -108,15 +108,20 @@ const LoginScreen = ({ onLoginSuccess }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await loginUser(username, password);
+      const response = await loginUser (username, password);
       showNotification('Login Successful!', 'success');
       console.log(response.message);
-      onLoginSuccess?.(); // move to dashboard later
+      
+      // Delay navigation to allow notification to show (match your timeout)
+      setTimeout(() => {
+        onLoginSuccess?.(); // move to dashboard later
+      }, 500); // Or 2000ms to match full notification duration
     } catch (error) {
       showNotification('Login Unsuccessful!', 'error');
       console.error('Login failed: Invalid credentials!');
     }
   };
+
 
   return (
     <div className="flex items-center justify-center w-screen h-screen bg-gray-900 text-white relative overflow-hidden">
