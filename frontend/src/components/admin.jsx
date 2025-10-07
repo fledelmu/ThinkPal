@@ -97,7 +97,7 @@ const Admin = () => {
                 <th className="p-2 border border-gray-300">Actions</th>
                 </tr>
             </thead>
-            <tbody className="align-top">
+            <tbody className="align-baseline">
                 {users.map((u) => (
                 <tr key={u.user_id}>
                     <td className="p-2 border border-gray-300">{u.user_id}</td>
