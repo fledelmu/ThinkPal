@@ -88,7 +88,7 @@ const Admin = () => {
         </button>
       </div>
 
-      <table className="w-full h-[85%] border-collapse border border-gray-300">
+      <table className="w-full border-collapse border border-gray-300">
             <thead className="bg-gray-200">
                 <tr>
                 <th className="p-2 border border-gray-300">ID</th>
