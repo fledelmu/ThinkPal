@@ -33,7 +33,7 @@ function App() {
   return (
     <LoadingProvider>
       <div className='flex bg-rule-bg w-screen h-screen'>
-        <Sidebar setActive={setActive} activeTab={activeTab} />
+        <Sidebar setActive={setActive} activeTab={activeTab} setIsLoggedIn={setIsLoggedIn}/>
         <div>
           {activeTab === "Dashboard" && <Dashboard />}
           {activeTab === "Quizzes" && <Quiz />}
