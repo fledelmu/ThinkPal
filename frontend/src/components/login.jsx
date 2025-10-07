@@ -1,4 +1,4 @@
-import { loginUser, createUser } from '../utils/api';
+import { loginUser, registerUser } from '../utils/api';
 import { useState, useEffect } from 'react';
 
 const Notification = ({ message, type }) => {
@@ -110,7 +110,8 @@ const LoginScreen = ({ onLoginSuccess }) => {
 
   const handleRegister = async () => {
     try {
-      const response = await createUser(username, password, role); // Use createUser API
+      // Pass role to registerUser
+      const response = await registerUser(username, password, role);
       showNotification(`Registration Successful! (${role})`, 'success');
       console.log(response.message);
     } catch (error) {
@@ -118,7 +119,6 @@ const LoginScreen = ({ onLoginSuccess }) => {
       console.error('Register failed:', error);
     }
   };
-
   const handleLogin = async () => {
     try {
       const response = await loginUser(username, password);
