@@ -12,36 +12,35 @@ import logout_icon_hovered from "../assets/icons/logout_icon_hovered.png";
 import { logoutUser } from '../utils/api';
 import { useState } from 'react';
 
-const LogoutModal = ({ onClose, onConfirm }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-rule-bg text-rule-text w-[25%] p-6 rounded-2xl shadow-xl text-center">
-        <h1 className="text-2xl font-bold mb-4">Confirm Logout</h1>
-        <p className="mb-6 text-lg">Are you sure you want to log out?</p>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={onClose}
-            className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-lg font-bold"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold"
-          >
-            Logout
-          </button>
-        </div>
+const LogoutModal = ({ onClose, onConfirm }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-rule-bg text-rule-text w-[25%] p-6 rounded-2xl shadow-xl text-center">
+      <h1 className="text-2xl font-bold mb-4">Confirm Logout</h1>
+      <p className="mb-6 text-lg">Are you sure you want to log out?</p>
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={onClose}
+          className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-lg font-bold"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold"
+        >
+          Logout
+        </button>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
-const Sidebar = ({ setActive, activeTab, setIsLoggedIn }) => {
+const Sidebar = ({ setActive, activeTab, setIsLoggedIn, currentUser }) => {
   const [currentBtn, setCrntBtn] = useState(null);
   const [logoutHover, setLogoutHover] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // Base buttons
   const buttons = [
     { name: "Dashboard", icon: dashboard_icon, iconHover: dashboard_icon_hover },
     { name: "Notes", icon: notes_icon, iconHover: notes_icon_hover },
@@ -49,10 +48,15 @@ const Sidebar = ({ setActive, activeTab, setIsLoggedIn }) => {
     { name: "Tasks", icon: task_icon, iconHover: task_icon_selected },
   ];
 
+  // Add Admin button only for admins
+  if (currentUser?.role === 'admin') {
+    buttons.push({ name: "Admin", icon: dashboard_icon, iconHover: dashboard_icon_hover });
+  }
+
   const handleLogout = async () => {
     try {
-      await logoutUser(); // Call your backend logout
-      setIsLoggedIn(false); // 👈 Return to login screen (SPA style)
+      await logoutUser();
+      setIsLoggedIn(false);
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -63,12 +67,12 @@ const Sidebar = ({ setActive, activeTab, setIsLoggedIn }) => {
   return (
     <>
       <div className="fixed top-0 left-0 h-full w-20 flex flex-col justify-between items-center bg-rule-60 text-white text-lg p-3 z-10">
-        {/* Top Logo */}
+        {/* Logo */}
         <div className="p-2">
           <img src={Pic} className="w-20 h-auto" alt="Sidebar Logo" />
         </div>
 
-        {/* Middle Buttons */}
+        {/* Buttons */}
         <div className="flex flex-col w-full items-center justify-center gap-5 pt-3 pb-3 mt-3">
           {buttons.map((btn, index) => (
             <div key={index} className="relative group w-fit h-fit flex justify-center">
@@ -101,7 +105,7 @@ const Sidebar = ({ setActive, activeTab, setIsLoggedIn }) => {
           ))}
         </div>
 
-        {/* Bottom Logout Button */}
+        {/* Logout */}
         <div className="pb-3">
           <div className="relative group w-fit h-fit flex justify-center">
             <div
@@ -133,12 +137,9 @@ const Sidebar = ({ setActive, activeTab, setIsLoggedIn }) => {
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Modal */}
       {showLogoutModal && (
-        <LogoutModal
-          onClose={() => setShowLogoutModal(false)}
-          onConfirm={handleLogout}
-        />
+        <LogoutModal onClose={() => setShowLogoutModal(false)} onConfirm={handleLogout} />
       )}
     </>
   );

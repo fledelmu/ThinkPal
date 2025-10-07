@@ -68,6 +68,7 @@ class User(UserMixin, db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(50), default='user', nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.now)
 
     # Relationships
@@ -695,7 +696,97 @@ def delete_task(task_id):
 
     return jsonify({'message': 'Task deleted successfully'}), 200
 
+# ------------------ USERS ------------------
 
+# Get all users (admin only, optionally)
+@app.route('/admin-users', methods=['GET'])
+@login_required
+def get_users():
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    users = User.query.all()
+    return jsonify([
+        {
+            'user_id': u.user_id,
+            'username': u.username,
+            'role': u.role,
+            'date_created': u.date_created
+        } for u in users
+    ]), 200
+
+# Create a new user (admin only)
+@app.route('/admin/create-user', methods=['POST'])
+@login_required
+def create_user():
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role', 'user')
+
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already exists'}), 400
+
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, password=hashed_password, role=role)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({'message': 'User created', 'user_id': new_user.user_id}), 201
+
+# Update a user (self or admin)
+@app.route('/admin/update-user/<int:user_id>', methods=['PUT'])
+@login_required
+def update_user(user_id):
+    if current_user.user_id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+
+    # Update username
+    if 'username' in data:
+        if User.query.filter(User.username == data['username'], User.user_id != user_id).first():
+            return jsonify({'error': 'Username already exists'}), 400
+        user.username = data['username']
+
+    # Update password
+    if 'password' in data:
+        user.password = generate_password_hash(data['password'])
+
+    # Update role (admin only)
+    if 'role' in data and current_user.role == 'admin':
+        user.role = data['role']
+
+    db.session.commit()
+    return jsonify({'message': 'User updated'}), 200
+
+# Delete a user (admin only)
+@app.route('/admin/delete-user/<int:user_id>', methods=['DELETE'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'User deleted'}), 200
+
+@app.route('/current-user', methods=['GET'])
+@login_required
+def current_user_info():
+    return jsonify({
+        'user_id': current_user.user_id,
+        'username': current_user.username,
+        'role': getattr(current_user, 'role', 'user')  # fallback to 'user'
+    })
 """
 if __name__ == '__main__':
     print("Starting Flask server...")
