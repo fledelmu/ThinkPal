@@ -208,23 +208,65 @@ const logoutUser = async () => {
   }
 };
 
+
+// Tasks
+
+const getTasks = async () => {
+  try{
+    const response = await api.get('/task/all')
+    return response.data;
+  } catch (error) {
+    console.error('Error retrieving tasks:', error);
+    throw error;
+  }
+}
+
+const addTask = async (task_name, task_details, status) => {
+  try{
+    const response = await api.post('/task/add',{
+      task_name,
+      task_details,
+      status
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating task: ', error);
+    throw error;
+  }
+}
+
+
+const editTask = async (task_id, task_name, task_details, status) => {
+  try{
+    const response = await api.put(`/task/edit/${task_id}`,{
+      task_name,
+      task_details,
+      status
+    });
+
+    return response.data;
+  } catch (error){
+    console.error("Unable to edit task: ", error);
+    throw error;
+  }
+}
+
+const deleteTask = async (task_id) => {
+  try{
+    const response = await api.delete(`/task/delete/${task_id}`);
+
+    return response.data;
+  } catch (error) {
+    console.error("Unable to delete task: ", error);
+    throw error;
+  }
+}
+
 export {
-  postNote,
-  getSelectedNote,
-  getNote,
-  updateNote,
-  deleteNote,
-  elaborateNote,
-  postTitle,
-  updateTitle,
-  getSelectedTitle,
-  getTitle,
-  getTitleNum,
-  deleteTitle,
-  generateQuiz,
-  getQuizzes,
-  getRecents,
-  registerUser,
-  loginUser,
-  logoutUser,
+  postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Notes
+  postTitle, updateTitle, getSelectedTitle, getTitle, getTitleNum, deleteTitle, // Titles
+  generateQuiz, getQuizzes, // Quizzes
+  getRecents, // Recents
+  registerUser, loginUser, logoutUser, // Auth
+  getTasks, addTask, editTask, deleteTask // Tasks
 };

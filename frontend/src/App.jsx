@@ -3,13 +3,14 @@ import Sidebar from './components/sidebar';
 import { Dashboard } from './components/dashboard';
 import Quiz from './components/quiz';
 import { Notes } from './components/notes';
+import Tasks from './components/tasks'
 import { useState, useEffect } from 'react';
 import { LoadingProvider } from './components/LoadingContext';
 import LoginScreen from './components/login';
 
 function App() {
   const [activeTab, setActive] = useState("Dashboard");
-  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [isLoggedIn, setIsLoggedIn] = useState(true); 
 
   useEffect(() => {
     const handler = (e) => {
@@ -37,6 +38,7 @@ function App() {
           {activeTab === "Dashboard" && <Dashboard />}
           {activeTab === "Quizzes" && <Quiz />}
           {activeTab === "Notes" && <Notes />}
+          {activeTab === "Tasks" && <Tasks/>}
         </div>
       </div>
     </LoadingProvider>
