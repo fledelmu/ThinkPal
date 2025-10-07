@@ -1,6 +1,20 @@
 import { registerUser, loginUser } from '../utils/api';
 import { useState } from 'react';
 
+const Notification = ({ message, type }) => {
+  if (!message) return null;
+
+  return (
+    <div
+      className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+      px-6 py-3 rounded-xl shadow-lg text-lg font-semibold text-white transition-opacity duration-300
+      ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+    >
+      {message}
+    </div>
+  );
+};
+
 const LoginContext = ({
   username,
   password,
@@ -57,18 +71,27 @@ const LoginContext = ({
   );
 };
 
-
 const LoginScreen = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [notification, setNotification] = useState({ message: '', type: '' });
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification({ message: '', type: '' });
+    }, 2000); // disappears after 2 seconds
+  };
 
   const handleRegister = async () => {
     try {
       const response = await registerUser(username, password);
       console.log(`Successfully registered ${username}!`);
+      showNotification('Registration Successful!', 'success');
       console.log(response.message);
     } catch (error) {
       console.error('Register failed:', error);
+      showNotification('Registration Unsuccessful!', 'error');
     }
   };
 
@@ -76,15 +99,17 @@ const LoginScreen = ({ onLoginSuccess }) => {
     try {
       const response = await loginUser(username, password);
       console.log('Login successful!');
+      showNotification('Login Successful!', 'success');
       console.log(response.message);
       onLoginSuccess?.(); // move to dashboard later
     } catch (error) {
       console.error('Login failed: Invalid credentials!');
+      showNotification('Login Unsuccessful!', 'error');
     }
   };
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900 text-white">
+    <div className="flex items-center justify-center w-screen h-screen bg-gray-900 text-white relative">
       <LoginContext
         username={username}
         password={password}
@@ -93,8 +118,9 @@ const LoginScreen = ({ onLoginSuccess }) => {
         handleLogin={handleLogin}
         handleRegister={handleRegister}
       />
+      <Notification message={notification.message} type={notification.type} />
     </div>
   );
 };
+
 export default LoginScreen;
-    
