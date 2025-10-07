@@ -5,12 +5,18 @@ const Notification = ({ message, type }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (message) {
-      setVisible(true);
-      const timer = setTimeout(() => setVisible(false), 1800);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
+  if (message) {
+    // Add a 10ms delay to ensure the component mounts before transitioning
+    const showTimer = setTimeout(() => setVisible(true), 10);
+    const hideTimer = setTimeout(() => setVisible(false), 1800);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  } else {
+    setVisible(false);
+  }
+}, [message]);
 
   if (!message) return null;
 
@@ -107,20 +113,18 @@ const LoginScreen = ({ onLoginSuccess }) => {
   };
 
   const handleLogin = async () => {
-    try {
-      const response = await loginUser (username, password);
-      showNotification('Login Successful!', 'success');
-      console.log(response.message);
-      
-      // Delay navigation to allow notification to show (match your timeout)
-      setTimeout(() => {
-        onLoginSuccess?.(); // move to dashboard later
-      }, 500); // Or 2000ms to match full notification duration
-    } catch (error) {
-      showNotification('Login Unsuccessful!', 'error');
-      console.error('Login failed: Invalid credentials!');
-    }
-  };
+  try {
+    const response = await loginUser(username, password);
+    showNotification('Login Successful!', 'success');
+    setTimeout(() => {
+      onLoginSuccess?.();
+      setNotification({ message: '', type: '' }); // Clear notification
+    }, 2000);
+  } catch (error) {
+    showNotification('Login Unsuccessful!', 'error');
+    setTimeout(() => setNotification({ message: '', type: '' }), 2000);
+  }
+};
 
 
   return (
