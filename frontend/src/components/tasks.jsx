@@ -289,8 +289,12 @@ const Tasks = () => {
         </div>
       </div>
 
-      {/* 🟢 Conditionally render NewTask */}
-      {showNewTask && <NewTask onClose={() => setShowNewTask(false)} />}
+      {showNewTask && (
+        <NewTask
+          onClose={() => setShowNewTask(false)}
+          onTaskAdded={fetchTasks}  
+        />
+      )}
     </>
   );
 };
