@@ -178,9 +178,9 @@ const elaborateNote = async (note) => {
 };
 
 // -------------------- AUTH --------------------
-const registerUser = async (username, password) => {
+const registerUser = async (username, password, role = 'user') => {
   try {
-    const response = await api.post('/login/register', { username, password });
+    const response = await api.post('/login/register', { username, password, role });
     return response.data;
   } catch (error) {
     console.error('Registration failed:', error.response?.data || error.message);

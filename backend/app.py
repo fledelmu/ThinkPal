@@ -239,6 +239,7 @@ def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    role = data.get('role', 'user')  # default role is 'user'
 
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
@@ -246,13 +247,18 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already exists'}), 400
 
+    # optional: validate role value
+    if role not in ['user', 'admin']:
+        return jsonify({'error': 'Invalid role'}), 400
+
     hashed_password = generate_password_hash(password)
 
-    user = User(username=username, password=hashed_password)
+    user = User(username=username, password=hashed_password, role=role)
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({'message': 'User registered successfully'})
+    return jsonify({'message': 'User registered successfully', 'role': role})
+
 
 @app.route('/login', methods=['POST'])
 def login():
