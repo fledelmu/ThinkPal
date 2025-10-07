@@ -87,40 +87,45 @@ const DisplayTask = ({
   return (
     <div className="flex flex-row justify-start gap-8 m-2 border border-gray-400 p-5 rounded-xl text-rule-text font-bold">
       {/* Task Name */}
-      <div className="m-0 w-[20%] min-w-0 flex items-center">
-        {isEditing ? (
-          <input
-            value={editedData.task_name || task.task_name}
-            onChange={(e) =>
-              setEditedData((prev) => ({ ...prev, task_name: e.target.value }))
-            }
-            className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent text-xl"
-            placeholder="Edit task name..."
-          />
-        ) : (
-          <span className="text-xl">{task.task_name}</span>
-        )}
-      </div>
+        <div className="m-0 w-[20%] min-w-0 flex items-center">
+            {isEditing ? (
+                <input
+                value={
+                    editedData.task_name !== undefined
+                    ? editedData.task_name
+                    : task.task_name
+                }
+                onChange={(e) =>
+                    setEditedData((prev) => ({ ...prev, task_name: e.target.value }))
+                }
+                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent text-xl"
+                placeholder="Edit task name..."
+                />
+            ) : (
+                <span className="text-xl">{task.task_name}</span>
+            )}
+            </div>
 
-      {/* Task Details */}
-      <div className="m-0 w-[40%] min-w-0 flex items-center">
-        {isEditing ? (
-          <input
-            value={
-                editedData.task_details !== undefined
+            {/* Task Details */}
+            <div className="m-0 w-[40%] min-w-0 flex items-center">
+            {isEditing ? (
+                <input
+                value={
+                    editedData.task_details !== undefined
                     ? editedData.task_details
                     : task.task_details
-            }
-            onChange={(e) =>
-              setEditedData((prev) => ({ ...prev, task_details: e.target.value }))
-            }
-            className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent text-xl"
-            placeholder="Edit details..."
-          />
-        ) : (
-          <span className="text-xl">{task.task_details}</span>
-        )}
-      </div>
+                }
+                onChange={(e) =>
+                    setEditedData((prev) => ({ ...prev, task_details: e.target.value }))
+                }
+                className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent text-xl"
+                placeholder="Edit details..."
+                />
+            ) : (
+                <span className="text-xl">{task.task_details}</span>
+            )}
+        </div>
+
 
       {/* Task Status */}
       <div className="m-0 w-1/5 min-w-0 text-right flex items-center">
