@@ -106,7 +106,11 @@ const DisplayTask = ({
       <div className="m-0 w-[40%] min-w-0 flex items-center">
         {isEditing ? (
           <input
-            value={editedData.task_details || task.task_details}
+            value={
+                editedData.task_details !== undefined
+                    ? editedData.task_details
+                    : task.task_details
+            }
             onChange={(e) =>
               setEditedData((prev) => ({ ...prev, task_details: e.target.value }))
             }

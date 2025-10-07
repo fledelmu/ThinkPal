@@ -10,7 +10,7 @@ import LoginScreen from './components/login';
 
 function App() {
   const [activeTab, setActive] = useState("Dashboard");
-  const [isLoggedIn, setIsLoggedIn] = useState(true); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
 
   useEffect(() => {
     const handler = (e) => {
