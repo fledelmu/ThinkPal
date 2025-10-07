@@ -274,11 +274,12 @@ const getUsers = async () =>{
   }
 }
 
-const createUser = async (username, password) => {
+const createUser = async (username, password, role) => {
   try{
     const response = await api.post('/admin/create-user',{
       username,
-      password
+      password,
+      role
     });
     return response.data;
   } catch (error) {
