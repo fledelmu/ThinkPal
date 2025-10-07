@@ -262,11 +262,67 @@ const deleteTask = async (task_id) => {
   }
 }
 
+// Admin
+
+const getUsers = async () =>{
+  try{
+    const response = await api.get('/admin/create-user');
+    return response.data;
+  } catch (error) {
+    console.error("Unable to retrieve users: ", error);
+    throw error;
+  }
+}
+
+const createUser = async (username, password) => {
+  try{
+    const response = await api.post('/admin/create-user',{
+      username,
+      password
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Unable to create user: ", error);
+    throw error;
+  }
+}
+
+const updateUser = async (user_id) => {
+  try{
+    const response = api.put(`/admin/update-user/${user_id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Unable to update user: ", error);
+    throw error;
+  }
+}
+
+const deleteUser = async (user_id) => {
+  try{
+    const response = api.delete(`/admin/delete-user/${user_id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Unable to delete user: ", error);
+    throw error;
+  }
+}
+
+const getCurrentUser = async () => {
+  try {
+    const response = await api.get('/current-user');
+    return response.data; 
+  } catch (err) {
+    console.error('Error fetching current user:', err);
+    return null;
+  }
+};
+
 export {
   postNote, getSelectedNote, getNote, updateNote, deleteNote, elaborateNote, // Notes
   postTitle, updateTitle, getSelectedTitle, getTitle, getTitleNum, deleteTitle, // Titles
   generateQuiz, getQuizzes, // Quizzes
   getRecents, // Recents
   registerUser, loginUser, logoutUser, // Auth
-  getTasks, addTask, editTask, deleteTask // Tasks
+  getTasks, addTask, editTask, deleteTask, // Tasks
+  getUsers, createUser, updateUser, deleteUser, getCurrentUser // Admin
 };
