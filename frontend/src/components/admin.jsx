@@ -88,29 +88,29 @@ const Admin = () => {
         </button>
       </div>
 
-      <table border="1" cellPadding="5" className="w-full h-[85%] overflow-auto">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.user_id}>
-              <td>{u.user_id}</td>
-              <td>{u.username}</td> 
-              <td>{u.role}</td>
-              <td>
-                <button onClick={() => handleUpdate(u.user_id)} className="mr-2 px-2 py-1 bg-yellow-500 text-white rounded">Edit</button>
-                <button onClick={() => handleDelete(u.user_id)} className="px-2 py-1 bg-red-500 text-white rounded">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <table className="w-full h-[85%] border-collapse border border-gray-300">
+            <thead className="bg-gray-200">
+                <tr>
+                <th className="p-2 border border-gray-300">ID</th>
+                <th className="p-2 border border-gray-300">Username</th>
+                <th className="p-2 border border-gray-300">Role</th>
+                <th className="p-2 border border-gray-300">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="align-top">
+                {users.map((u) => (
+                <tr key={u.user_id}>
+                    <td className="p-2 border border-gray-300">{u.user_id}</td>
+                    <td className="p-2 border border-gray-300">{u.username}</td> 
+                    <td className="p-2 border border-gray-300">{u.role}</td>
+                    <td className="p-2 border border-gray-300">
+                    <button onClick={() => handleUpdate(u.user_id)} className="mr-2 px-2 py-1 bg-yellow-500 text-white rounded">Edit</button>
+                    <button onClick={() => handleDelete(u.user_id)} className="px-2 py-1 bg-red-500 text-white rounded">Delete</button>
+                    </td>
+                </tr>
+                ))}
+            </tbody>
+        </table>
     </div>
   );
 };
