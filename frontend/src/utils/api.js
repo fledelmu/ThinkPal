@@ -266,7 +266,7 @@ const deleteTask = async (task_id) => {
 
 const getUsers = async () =>{
   try{
-    const response = await api.get('/admin-user');
+    const response = await api.get('/admin-users');
     return response.data;
   } catch (error) {
     console.error("Unable to retrieve users: ", error);
