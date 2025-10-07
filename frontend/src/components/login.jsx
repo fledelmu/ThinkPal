@@ -1,13 +1,25 @@
 import { registerUser, loginUser } from '../utils/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Notification = ({ message, type }) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (message) {
+      setVisible(true);
+      const timer = setTimeout(() => setVisible(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   if (!message) return null;
 
   return (
     <div
-      className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-      px-6 py-3 rounded-xl shadow-lg text-lg font-semibold text-white transition-opacity duration-300
+      className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+      px-6 py-3 rounded-xl shadow-lg text-lg font-semibold text-white
+      transition-all duration-500 ease-in-out
+      ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}
       ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
     >
       {message}
@@ -24,7 +36,7 @@ const LoginContext = ({
   handleRegister
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center text-left h-[30%] w-[30%] bg-rule-bg text-black rounded-xl p-6 shadow-lg">
+    <div className="flex flex-col items-center justify-center text-left h-[30%] w-[30%] bg-rule-bg text-black rounded-xl p-6 shadow-lg z-10">
       <h1 className="text-2xl font-semibold mb-4">ThinkPal Login</h1>
 
       <div className="flex flex-col w-full">
@@ -86,30 +98,28 @@ const LoginScreen = ({ onLoginSuccess }) => {
   const handleRegister = async () => {
     try {
       const response = await registerUser(username, password);
-      console.log(`Successfully registered ${username}!`);
       showNotification('Registration Successful!', 'success');
       console.log(response.message);
     } catch (error) {
-      console.error('Register failed:', error);
       showNotification('Registration Unsuccessful!', 'error');
+      console.error('Register failed:', error);
     }
   };
 
   const handleLogin = async () => {
     try {
       const response = await loginUser(username, password);
-      console.log('Login successful!');
       showNotification('Login Successful!', 'success');
       console.log(response.message);
       onLoginSuccess?.(); // move to dashboard later
     } catch (error) {
-      console.error('Login failed: Invalid credentials!');
       showNotification('Login Unsuccessful!', 'error');
+      console.error('Login failed: Invalid credentials!');
     }
   };
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-gray-900 text-white relative">
+    <div className="flex items-center justify-center w-screen h-screen bg-gray-900 text-white relative overflow-hidden">
       <LoginContext
         username={username}
         password={password}
