@@ -182,10 +182,9 @@ const Tasks = () => {
   const [taskList, setTaskList] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editedData, setEditedData] = useState({});
-  const [showNewTask, setShowNewTask] = useState(false); // 🟢 controls modal visibility
+  const [showNewTask, setShowNewTask] = useState(false); 
 
-  useEffect(() => {
-    const fetchTasks = async () => {
+  const fetchTasks = async () => {
       try {
         const data = await getTasks();
         setTaskList(data);
@@ -193,6 +192,8 @@ const Tasks = () => {
         console.error("Failed to load tasks:", err);
       }
     };
+
+  useEffect(() => {
     fetchTasks();
   }, []);
 
