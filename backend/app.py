@@ -614,6 +614,88 @@ def get_quizzes():
         } for q in quizzes
     ])
 
+
+# ------------------ TASKS ------------------
+
+@app.route('/task/all', methods=['GET'])
+@login_required
+def get_all_tasks():
+    tasks = Task.query.filter_by(user_id=current_user.user_id).all()
+    return jsonify([
+        {
+            'task_id': t.task_id,
+            'user_id': t.user_id,
+            'task_name': t.task_name,
+            'task_details': t.task_details,
+            'status': t.status,
+            'date_created': t.date_created,
+            'date_completed': t.date_completed
+        } for t in tasks
+    ]), 200
+
+
+@app.route('/task/add', methods=['POST'])
+@login_required
+def add_task():
+    data = request.get_json()
+    if not data.get('task_name'):
+        return jsonify({'error': 'task_name is required'}), 400
+
+    new_task = Task(
+        user_id=current_user.user_id,
+        task_name=data['task_name'],
+        task_details=data.get('task_details'),
+        status=data.get('status', 'Pending'),
+        date_created=datetime.now()
+    )
+
+    db.session.add(new_task)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Task added successfully',
+        'task_id': new_task.task_id,
+        'task_name': new_task.task_name,
+        'task_details': new_task.task_details,
+        'status': new_task.status
+    }), 201
+
+
+@app.route('/task/edit/<int:task_id>', methods=['PUT'])
+@login_required
+def edit_task(task_id):
+    task = Task.query.filter_by(task_id=task_id, user_id=current_user.user_id).first_or_404()
+    data = request.get_json()
+
+    task.task_name = data.get('task_name', task.task_name)
+    task.task_details = data.get('task_details', task.task_details)
+    task.status = data.get('status', task.status)
+
+    if task.status.lower() == "completed" and not task.date_completed:
+        task.date_completed = datetime.now()
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Task updated successfully',
+        'task_id': task.task_id,
+        'task_name': task.task_name,
+        'task_details': task.task_details,
+        'status': task.status
+    }), 200
+
+
+@app.route('/task/delete/<int:task_id>', methods=['DELETE'])
+@login_required
+def delete_task(task_id):
+    task = Task.query.filter_by(task_id=task_id, user_id=current_user.user_id).first_or_404()
+
+    db.session.delete(task)
+    db.session.commit()
+
+    return jsonify({'message': 'Task deleted successfully'}), 200
+
+
 """
 if __name__ == '__main__':
     print("Starting Flask server...")
