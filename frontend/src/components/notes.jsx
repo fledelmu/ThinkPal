@@ -203,6 +203,9 @@ const AddNote = ({ onExit, note = null, onSave }) => {
       ["link", "image", "video"],
       ["clean"],
     ],
+    clipboard: {
+      matchVisual: false, 
+    },
   }
 
   const createQuiz = async () => {
