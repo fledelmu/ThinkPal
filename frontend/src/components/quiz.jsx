@@ -1,4 +1,5 @@
 import quiz_img from '../assets/images/quiz_img.png';
+import stringSimilarity from 'string-similarity';
 import { useEffect, useState } from 'react';
 import { getQuizzes, getTitle } from '../utils/api';
 
@@ -27,11 +28,18 @@ const QuizCard = ({ quizData }) => {
     const handleSubmit = () => {
         if (!currentQuiz) return;
 
-        if (answer.trim().toLowerCase() === currentQuiz.answer.toLowerCase()) {
+        const userAns = answer.trim().toLowerCase();
+        const correctAns = currentQuiz.answer.trim().toLowerCase();
+
+        // Compute how similar the user's answer is to the correct answer
+        const similarity = stringSimilarity.compareTwoStrings(userAns, correctAns);
+
+        // Allow small mistakes (0.85 means at least 85% similar)
+        if (similarity >= 0.85) {
             setScore(prev => prev + 1);
-            console.log('Correct! Score:', score + 1);
+            console.log(`Correct (similarity: ${similarity.toFixed(2)})! Score:`, score + 1);
         } else {
-            console.log('Incorrect. Correct answer:', currentQuiz.answer);
+            console.log(`Incorrect (similarity: ${similarity.toFixed(2)}). Correct answer:`, currentQuiz.answer);
         }
 
         setAnswer('');
@@ -43,6 +51,7 @@ const QuizCard = ({ quizData }) => {
             setQuizCompleted(true);
         }
     };
+
 
     if (!quizData.quizzes.length) return <p>No quizzes available.</p>;
 

@@ -18,7 +18,8 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-pdf": "^9.2.1",
-    "react-quill-new": "^3.4.6"
+    "react-quill-new": "^3.4.6",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
